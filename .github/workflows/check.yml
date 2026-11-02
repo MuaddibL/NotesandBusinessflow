@@ -23,8 +23,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Install locked environment
         run: uv sync --frozen
-      - name: Install e2e browser (docs/testing.md)
-        run: uv run --frozen playwright install --with-deps chromium
+      - name: Qt runtime libraries for the offscreen platform (docs/testing.md)
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon-x11-0
       # --fast is for the inner loop only; CI always runs the full contract (docs/testing.md).
       - name: Verification contract
         run: |
@@ -55,8 +55,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Install locked environment
         run: uv sync --frozen
-      - name: Install e2e browser (docs/testing.md)
-        run: uv run --frozen playwright install --with-deps chromium
+      - name: Qt runtime libraries for the offscreen platform (docs/testing.md)
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon-x11-0
       - name: Residue test (full profile)
         run: ./scripts/residue
       - name: Residue test (fast profile)
