@@ -1,11 +1,41 @@
 """Starts the application locally: ``uv run python -m app`` (README)."""
 
+import os
+import sys
+from pathlib import Path
 
-def main() -> None:
-    # Placeholder until the Qt shell lands (plan 0002, step 4): the HTTP skeleton is gone and
-    # starting silently would look like a working app.
-    raise SystemExit("Notes&MJ penceresi henüz bağlanmadı (plan 0002/4).")
+from PySide6.QtWidgets import QApplication
+
+from app.shared.db import open_database
+from app.shared.errors import StorageError
+from app.shared.logging import report_unexpected
+from app.shared.paths import database_path
+from app.ui.error_dialog import storage_error_box, unexpected_error_box
+from app.ui.main_window import MainWindow
+from app.ui.theme import stylesheet
+
+
+def main() -> int:
+    app = QApplication(sys.argv)
+    app.setStyleSheet(stylesheet())
+
+    try:
+        connection = open_database(database_path(os.environ, Path.home()))
+    except StorageError as error:
+        # Starting up empty would look like a working app with no data (CB-6).
+        storage_error_box(None, error).exec()
+        return 1
+
+    def _excepthook(kind: type[BaseException], error: BaseException, traceback: object) -> None:
+        correlation_id = report_unexpected(error)
+        unexpected_error_box(None, correlation_id).exec()
+
+    sys.excepthook = _excepthook
+
+    window = MainWindow(on_close=connection.close)
+    window.show()
+    return app.exec()
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
