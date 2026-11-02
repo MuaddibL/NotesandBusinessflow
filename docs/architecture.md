@@ -1,70 +1,84 @@
 # Architecture
 
 ## System overview
-Polsan Leave Manager, Polsan çalışanlarının izin talebi oluşturduğu, yöneticilerin onayladığı /
-reddettiği ve İK'nın izin bakiyelerini yönettiği bir web uygulamasıdır; e-posta/Excel ile yürüyen
-izin sürecini tek, denetlenebilir bir sisteme taşır. Stil: **modüler monolit** — tek süreç, tek
-repo, tek veritabanı; modül sınırları grimp tabanlı bir mimari testle zorlanır. Gerekçe: tek ekip ve orta
-ölçekli bir İK uygulaması için servis ayrıştırmanın maliyeti getirisinden büyük; sınırlar testle
-korunduğu için ileride ayrıştırma mümkün kalır (bootstrap kararı, 2026-10-19).
+Notes&MJ, tek kişinin kendi makinesinde çalıştırdığı bir masaüstü çalışma alanıdır: günlük iş
+planlama, odak oturumları ve not alma tek uygulamada ve birbirine bağlı biçimde toplanır. Ürünü
+ayırt eden şey bu bağlar — bir görevden odak oturumu başlatmak, bir notu göreve iliştirmek —
+yoksa üç ayrı araç zaten mevcuttur.
 
-Teknoloji: Python 3.12 · FastAPI (JSON API, `/api/...`) · SQLAlchemy 2.x + Alembic · SQLite ·
-frontend: FastAPI'nin statik sunduğu vanilla HTML/CSS/JavaScript (ES modülleri, build adımı yok),
-API ile aynı origin.
+Stil: **modüler monolit** — tek süreç, tek repo, tek veritabanı dosyası; modül sınırları grimp
+tabanlı bir mimari testle zorlanır. Gerekçe: tek kişilik, çevrimdışı ve tek süreçli bir masaüstü
+aracında servis ayrıştırmanın hiçbir getirisi yoktur; sınırlar testle korunduğu için modüller yine
+de birbirine yapışmaz (bootstrap kararı, 2026-11-02).
 
-Paket düzeni:
+Teknoloji: Python 3.12 · **PySide6** (Qt Widgets + QSS) · stdlib **`sqlite3`** (şema sürümü
+`PRAGMA user_version` ile) · uv. Sunucu yok, hesap yok, ağ yok.
+
+> **Geçiş durumu (2026-11-02).** Repodaki kod hâlâ spec 0001'in FastAPI iskeletidir. Bu dokümanda
+> anlatılan yapı **hedeftir**; geçişi spec 0002 yapar: FastAPI/uvicorn/Playwright bağımlılıklarının
+> kaldırılması, `main.py` · `health.py` · `shared/http.py` · `static/` · `tests/e2e/` ve HTTP'ye
+> bağlı integration testlerinin kaldırılması, PySide6 + pytest-qt eklenmesi, `scripts/check.conf`
+> ve `tests/architecture_rules.py` yasak paket kümesinin güncellenmesi. O ana kadar docs ile kod
+> arasındaki fark bilinçlidir ve burada kayıtlıdır (R-10 gerekmez).
+
+Hedef paket düzeni:
 ```
 app/
-  __main__.py              # yerel başlatma: `uv run python -m app` (yalnızca 127.0.0.1)
-  main.py                  # create_app(): router kaydı, hata yönetimi, statik açılış sayfası
-  health.py                # sağlık kontrolü (/api/health) — kimlik doğrulamasız, yalnızca durum
-  shared/                  # errors.py (DomainError, problem+json), http.py (hata handler'ları,
-                           # güvenlik başlıkları) — hiçbir modüle bağımlı değil
+  __main__.py              # uygulama girişi: `uv run python -m app`
+  ui/                      # PySide6 kabuğu: pencere, görünümler, QSS teması — INCE, iş kuralı yok
+  shared/                  # errors.py (DomainError), db.py (bağlantı + user_version geçişleri)
+                           # — hiçbir modüle bağımlı değil
   modules/<module>/
     public.py              # modülün TEK dış yüzü: facade fonksiyonlar + DTO'lar
-    api.py                 # FastAPI router (yalnızca kendi modülünün service'ini çağırır)
-    service.py             # use-case'ler, yetki kontrolü, transaction sınırı
-    domain/                # saf Python iş kuralları (BR-n)
-    repository.py, models.py  # SQLAlchemy erişimi ve tablolar (modüle özel)
-  static/                  # index.html, *.css, *.js
-tests/unit · tests/integration · tests/e2e
+    service.py             # use-case'ler, transaction sınırı
+    domain/                # saf Python iş kuralları (BR-n) — Qt yok, IO yok, saat okumaz
+    repository.py          # sqlite3 erişimi (parametreli SQL), yalnızca kendi tabloları
+  resources/               # gömülü font, ikon, QSS — çevrimdışı (CDN yok)
+tests/unit · tests/integration · tests/ui
 ```
 
 ## Modules / components and ownership
 
 | Module | Single responsibility | Owns |
 |---|---|---|
-| Organization | Çalışan kayıtları ve yönetici hiyerarşisi | Çalışan, işe giriş tarihi, doğum tarihi, bağlı olduğu Yönetici |
-| Leave | İzin talebi yaşam döngüsü ve onay akışı (BR-4, BR-5, BR-6, BR-7) | İzin Talebi, durum geçmişi (audit) |
-| Balances | Hak ediş, bakiye ve eksi bakiye mahsubu (BR-1, BR-3) | İzin Bakiyesi (yıl bazlı hak/kullanılan/kalan), Hak Ediş kayıtları |
-| Calendar | Resmi tatiller ve iş günü hesabı (BR-2) | Resmi Tatil listesi |
-| Identity | Kimlik doğrulama, oturum, roller | Kullanıcı hesabı, parola hash'i, oturum, rol ataması |
+| `planner` | Günlük plan: görevler, zaman blokları, Eisenhower önceliklendirmesi, devir (BR-1, BR-6, BR-7) | Görev, Gün Planı, Zaman Bloğu, Günün 3 Büyük Odağı |
+| `focus` | Odak oturumu ve Pomodoro döngüsü (BR-5) | Odak Oturumu, seans sayacı ve süreleri |
+| `notes` | Not alma ve hızlı not sandığı (BR-2) | Not |
+| `projects` | Görevleri gruplayan uzun ömürlü iş başlıkları | Proje |
+| `tags` | Görev ve Notları kesen serbest sınıflandırma (BR-8) | Etiket, Etiketleme bağı |
+
+`ui` bir modül değildir: modüllerin `public` yüzlerini çağırıp ekrana basan ince kabuktur.
+Arşiv ve Çöp Kutusu da ayrı modül değildir — her modül kendi öğesinin durumunu (`active` →
+`archived` → `trashed`) kendi tutar; "Etiketler & Arşiv" ekranı bu facade'lerden derlenir.
 
 ## Communication rules
 - Modüller arası iletişim **yalnızca senkron facade çağrısıyla**: `app.modules.<m>.public`.
-- MVP'de event / mesaj kuyruğu yoktur; ihtiyaç doğarsa önce ADR yazılır.
+- `ui` yalnızca `public` facade'lerini çağırır; SQL, iş kuralı ve hesaplama içermez.
 - Her modül yalnızca kendi tablolarını sorgular; başka modülün verisine referans **sadece ID** ile.
-- Frontend JavaScript yalnızca kendi origin'indeki `/api/...` uçlarını `fetch` ile çağırır.
+  Modüller arası JOIN yoktur — `tags` bağları da (`target_kind`, `target_id`) ile polimorfiktir,
+  yabancı anahtarla başka modülün tablosuna bağlanmaz.
+- Olay / mesaj kuyruğu yoktur; ihtiyaç doğarsa önce ADR yazılır.
 
 ## Forbidden dependencies (make them testable)
 1–3, `tests/architecture_rules.py` içindeki genel kurallarla (grimp import grafı) `scripts/check`
-içinde (`test-unit-integration` adımı) zorlanır: modül başı yapılandırma yoktur, yeni bir modül
-otomatik kapsanır; kuralların kendisi sentetik graflarla test edilir (spec 0001). 4 ve 5 review'da
-kontrol edilir. import-linter, "aynı modül / başka modül" ayrımını genel ifade edemediği için
-kullanılmaz (plan 0001, Risk 1).
+içinde zorlanır: modül başı yapılandırma yoktur, yeni bir modül otomatik kapsanır. 4–6 review'da
+kontrol edilir; 5'in import ayağı spec 0002'de teste bağlanır (yasak paket kümesi güncellenir).
 1. Bir modül, başka bir modülün `public` dışındaki hiçbir alt paketini import etmez
-   (`domain`, `service`, `repository`, `models`, `api`).
-2. `app.modules.*.domain` şunları import etmez: `fastapi`, `starlette`, `sqlalchemy`, `httpx`.
-   Domain saati okumaz ve IO yapmaz — "bugün" parametre olarak verilir (import grafı çağrıyı
+   (`domain`, `service`, `repository`).
+2. `app.modules.*.domain` şunları import etmez: `PySide6`, `sqlite3` ve her türlü ağ/IO paketi.
+   Domain saati okumaz — "bugün" ve "şu an" parametre olarak verilir (import grafı çağrıyı
    göremez; bu kısım review'da kontrol edilir).
 3. `app.shared` hiçbir `app.modules.*` paketini import etmez.
-4. Bir modülün `models`/`repository` paketi başka modülün tablosuna JOIN veya sorgu yapmaz
-   (import yasağı 1 ile birlikte; review'da da kontrol).
-5. `app/static` altındaki JS harici CDN veya üçüncü parti kütüphane yüklemez; DOM'a veri
-   `textContent` ile basılır, `innerHTML` yasaktır.
+4. `app/ui` altında iş kuralı, hesaplama veya SQL bulunmaz; `ui` yalnızca `public` çağırır.
+5. **Ürün kodu ağa çıkmaz.** Yasak: `fastapi`, `uvicorn`, `starlette`, `requests`, `httpx`,
+   `urllib`, `socket` ve benzeri ağ yığını; ORM (`sqlalchemy`); telemetri/analitik ve bulut SDK'ları.
+6. Çalışma anında ağdan varlık yüklenmez: font, ikon ve tema `app/resources/` içinde gömülüdür
+   (tasarımdaki Tailwind/Google Fonts CDN bağımlılıkları yerelleştirilerek taşınır).
 
 ## Deliberately out of scope
-- Kurumsal SSO (Entra ID / Google OIDC) — Identity arayüzü arkasında, sonraki sürüm.
-- Çok aşamalı onay (Yönetici + İK); MVP'de tek onaylayıcı: doğrudan Yönetici.
-- Bordro/puantaj entegrasyonu, e-posta bildirimleri, mobil uygulama.
-- PostgreSQL ve çoklu instance dağıtımı (SQLite seçildi; ölçek gerekirse ADR).
+- **Senkronizasyon, bulut hesabı, çoklu cihaz** — tasarımda görünen "Senkronize" öğeleri kapsam
+  dışıdır ve arayüzden çıkarılır (bootstrap kararı, 2026-11-02). İstenirse önce ADR.
+- Çok kullanıcılı / ekip özellikleri, paylaşım, yetkilendirme.
+- Mobil uygulama ve web sürümü; macOS/Linux paketleme (çapraz platform yığın seçildi, yalnızca
+  Windows'ta test edilir ve paketlenir).
+- Takvim, e-posta ve bilet sistemi entegrasyonları (ağ yasağının doğal sonucu).

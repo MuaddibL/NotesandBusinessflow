@@ -1,7 +1,13 @@
-# Polsan Leave Manager
+# Notes&MJ
 
-Polsan çalışanlarının izin talebi oluşturduğu, yöneticilerin onayladığı ve İK'nın izin
-bakiyelerini yönettiği web uygulaması. Mimari ve kurallar: [`AGENTS.md`](AGENTS.md) ve `docs/`.
+Tek kişilik, tamamen yerel bir masaüstü çalışma alanı: günlük iş planlama (zaman blokları,
+Eisenhower), odak modu (Pomodoro) ve not alma — üçü birbirine bağlı. `MJ` = *My Job*.
+Veri makineden çıkmaz: sunucu, hesap ve ağ erişimi yoktur.
+Mimari ve kurallar: [`AGENTS.md`](AGENTS.md) ve `docs/`.
+
+> **Durum.** Repodaki kod henüz spec 0001'in iskeletidir (FastAPI). Hedef yığına (PySide6 + stdlib
+> `sqlite3`) geçişi spec 0002 yapar; ayrıntı [`docs/architecture.md`](docs/architecture.md).
+> Aşağıdaki çalıştırma komutları mevcut iskelet içindir ve 0002'de değişecektir.
 
 ## Çalıştırma
 
@@ -9,17 +15,20 @@ Gereksinim: [uv](https://docs.astral.sh/uv/) (Python 3.12'yi kendisi kurar).
 
 ```sh
 uv sync                                   # bağımlılıkları uv.lock'tan kurar
-uv run python -m app                      # http://127.0.0.1:8000 — yalnızca bu makineden erişilir
+uv run python -m app                      # mevcut iskelet: http://127.0.0.1:8000
 ```
-
-Port/host: `PLM_PORT` ve `PLM_HOST` ortam değişkenleri (varsayılan `8000` ve `127.0.0.1`).
 
 ## Doğrulama
 
 ```sh
-uv run playwright install chromium        # bir kerelik: e2e testleri için tarayıcı
-./scripts/check                           # tek doğrulama komutu (--fast: e2e hariç)
+uv run playwright install chromium        # bir kerelik: mevcut e2e testleri için tarayıcı
+./scripts/check                           # tek doğrulama komutu (--fast: yavaş adımlar hariç)
+./scripts/doctor                          # çalışma alanı sağlığı
 ```
+
+## Arayüz tasarımı
+
+Görsel kaynak ve tasarım–ürün farkları: [`docs/design/`](docs/design/README.md).
 
 ---
 

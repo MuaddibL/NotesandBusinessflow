@@ -1,47 +1,55 @@
 # Security
 
-Her plan ve review'ın uyması gereken temel kurallar.
+Her plan ve review'ın uyması gereken temel kurallar. Bu uygulamanın tehdit modeli alışılmışın
+dışındadır: sunucu, hesap ve ağ yoktur — saldırı yüzeyi makinenin kendisi ve uygulamaya verilen
+dosyalardır.
+
+## Veri ve gizlilik
+- Tüm veri yalnızca yerel makinede, tek bir SQLite dosyasında: `%LOCALAPPDATA%\Notes-MJ\`.
+  **Şifreleme yoktur**; koruma işletim sisteminin kullanıcı dosya izinleridir (bootstrap kararı,
+  2026-11-02). Dizüstü hırsızlığı gibi senaryolar için disk şifrelemesi (BitLocker) işletim
+  sistemi katmanının sorumluluğudur. Bu kararın değişmesi ADR ister.
+- **Uygulama ağa çıkmaz.** Telemetri, kullanım istatistiği, kilitlenme raporu, güncelleme kontrolü
+  ve bulut yedekleme yoktur. Bu bir özelliktir, eksiklik değil (`docs/architecture.md`, yasak 5–6).
+- Kullanıcı içeriği (not metni, görev başlığı, proje adı) loglara **yazılmaz**; loglarda yalnızca
+  ID, olay adı ve korelasyon ID'si bulunur.
+- Yedekleme kullanıcının sorumluluğundadır; uygulama yalnızca şema geçişinden önce veritabanı
+  dosyasının bir kopyasını alır (`docs/conventions.md`, Data rules).
 
 ## Secrets
-- Secrets never enter the repo, specs, prompts, or chat. `.env` is gitignored; provide `.env.example`.
-- Agents never print secret values, even when debugging.
-- Oturum imzalama anahtarı ve benzeri değerler ortam değişkeninden okunur; varsayılan değer yoktur
-  (yoksa uygulama başlamaz).
+- Repoda secret yoktur ve olmayacaktır: uygulama hiçbir servise bağlanmaz, API anahtarı taşımaz.
+  Bir plan secret ihtiyacı doğuruyorsa, önce ağ yasağının neden delindiği tartışılır.
+- Ajanlar secret değerlerini yazdırmaz, hata ayıklarken bile.
 
 ## Input & output
-- Tüm sınırlarda (HTTP gövdesi, query, path) giriş **Pydantic** modeliyle doğrulanır; doğrulanmamış
-  veri service katmanına girmez.
-- Veritabanı erişimi yalnızca SQLAlchemy parametreli sorgularıyla; string birleştirmeyle SQL yasak.
-- Frontend: sunucudan gelen veri DOM'a yalnızca `textContent` / `setAttribute` ile basılır;
-  `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `eval` yasaktır.
-- Hata yanıtları stack trace, SQL, dosya yolu, kişisel veri içermez (`docs/conventions.md`).
-- Yanıt başlıkları: sıkı `Content-Security-Policy` (`default-src 'self'`), `X-Content-Type-Options:
-  nosniff`, `Referrer-Policy: same-origin`.
+- Veritabanı erişimi yalnızca **parametreli `sqlite3` sorgularıyla**; string birleştirmeyle SQL
+  kurmak yasaktır.
+- Kullanıcıdan gelen ad veya yol dosya yoluna doğrudan birleştirilmez; uygulama kendi veri dizini
+  dışına yazmaz (path traversal).
+- İçe aktarma (ileride): dosyadan okunan içerik **veri** olarak işlenir — hiçbir koşulda
+  çalıştırılmaz, formül olarak değerlendirilmez veya HTML/zengin metin olarak yorumlanmaz.
+- Qt tarafında kullanıcı içeriği zengin metin olarak basılmaz: `setText` ile düz metin kullanılır,
+  `setHtml` kullanıcı içeriği için yasaktır (etiket enjeksiyonu).
+- Hata mesajları stack trace, SQL, dosya yolu ve kullanıcı içeriği göstermez
+  (`docs/conventions.md`, Error handling).
 
 ## AuthN / AuthZ
-- **AuthN (MVP):** Identity modülünde yerel kullanıcı + parola; parola **argon2id** ile hash'lenir.
-  Sunucu tarafı oturum, çerez `HttpOnly`, `Secure`, `SameSite=Strict`; durum değiştiren her istek
-  CSRF token ister. Token `localStorage`'da tutulmaz. SSO sonraki sürüm (Identity arayüzü arkasında).
-- **Roller:** Employee, Manager, HR.
-- **Varsayılan RED:** her endpoint açıkça rol/sahiplik kontrolü bildirir; kontrol bildirmeyen
-  endpoint'i bir test yakalar (route listesi üzerinden — ilk yetkili endpoint'le eklenir).
-- **Bilinçli istisnalar** (kimlik doğrulamasız, spec 0001): açılış sayfası ve statik dosyaları
-  (`app/static`), sağlık kontrolü (`/api/health`, yalnızca durum döner). Etkileşimli API
-  dokümanları (`/docs`, `/redoc`, `/openapi.json`) kapalıdır. Yeni istisna = spec değişikliği.
-- Yetki **service katmanında** zorlanır; UI'da düğme gizlemek yetki sayılmaz.
-- Görünürlük: Employee yalnızca kendi talep ve bakiyesini; Manager yalnızca doğrudan bağlılarının
-  taleplerini; HR herkesi görür. Kendi talebine karar verme yasak (BR-5).
-- **KVKK:** sağlık verisi özel nitelikli kişisel veridir — hastalık izninde tanı/teşhis saklanmaz,
-  yalnızca tarih aralığı ve "rapor var/yok". Kişisel veri (ad, doğum tarihi, izin nedeni) loglara
-  yazılmaz; loglarda yalnızca ID.
+Yoktur ve **bilinçli olarak kapsam dışıdır**: uygulama tek kullanıcılıdır ve işletim sistemi
+oturumunun arkasındadır. Rol, oturum, parola ve yetki kontrolü kavramları bu üründe mevcut değildir.
+Çok kullanıcılı veya paylaşımlı bir özellik gündeme gelirse, kod yazılmadan önce ADR yazılır.
 
 ## Dependencies
 - Yeni paket yalnızca **onaylanmış bir planın içinde**, gerekçesiyle eklenir; insan onaylar.
-- Lisans: MIT, BSD, Apache-2.0, PSF veya eşdeğer izin verici; GPL/AGPL yok.
+- Lisans: MIT, BSD, Apache-2.0, PSF veya eşdeğer izin verici. GPL/AGPL yok.
+  - **İstisna — LGPL (PySide6).** PySide6 LGPLv3'tür ve arayüz kütüphanesi olarak kullanılır
+    (bootstrap kararı, 2026-11-02). Koşullar: kütüphane **dinamik bağlanır**, kaynağı
+    değiştirilmez, dağıtımda statik bağlama yapılmaz ve lisans metni ürünle birlikte verilir.
+    Yeni bir LGPL bağımlılığı ayrı bir karar gerektirir.
 - Son 12 ayda bakım görmüş olmalı; sürümler `uv.lock` ile kilitli.
 - Güvenlik açığı taraması (`pip-audit`) CI'da ayrı bir job'da çalışır, `scripts/check` içinde değil
   (ağ gerektirir; check deterministik ve çevrimdışı kalır).
 
 ## Review lens
 Security is a mandatory dimension of every independent review (see `prompts/review.md`), not a
-separate afterthought phase.
+separate afterthought phase. Bu üründe review'ın özellikle baktığı yer: ağ yasağının delinmesi,
+kullanıcı içeriğinin loga veya hata mesajına sızması, ve parametresiz SQL.

@@ -1,7 +1,7 @@
 # Git
 
-Şablonun güvenli varsayılanları bootstrap'ta (2026-10-19) aynen kabul edildi. Branch adları ve
-commit mesajları İngilizce.
+Şablonun güvenli varsayılanları bootstrap'ta (2026-10-19) kabul edildi ve yeniden konumlandırmada
+(2026-11-02) aynen korundu. Branch adları ve commit mesajları İngilizce.
 
 ## Branching
 - `feature/<spec-no>-<short-name>` — **no branch without a spec.** Also for CHANGE-lane mini-specs.
@@ -22,6 +22,8 @@ commit mesajları İngilizce.
      (workflows/change-request.md) classifies as TRIVIAL: no acceptance criterion changes, no shared code. -->
 - Policy: **(1) PR + one reviewer, no spec** — seçildi (bootstrap, 2026-10-19). Ucuz güvenlik ağı:
   ikinci göz + CI'da check, "trivial sanılan" değişikliği yakalar.
+- Tek kişilik projede "bir inceleyici" = ayrı oturumdaki **salt-okunur `reviewer` ajanı**
+  (Kural 3 zaten bunu şart koşar); insan onayı PR'ı birleştirirken verilir (bootstrap, 2026-11-02).
 - Always: one narrow commit, `scripts/check` green. A second file or a new test means re-triage.
 
 ## Pull requests
