@@ -5,9 +5,9 @@ Eisenhower), odak modu (Pomodoro) ve not alma — üçü birbirine bağlı. `MJ`
 Veri makineden çıkmaz: sunucu, hesap ve ağ erişimi yoktur.
 Mimari ve kurallar: [`AGENTS.md`](AGENTS.md) ve `docs/`.
 
-> **Durum.** Repodaki kod henüz spec 0001'in iskeletidir (FastAPI). Hedef yığına (PySide6 + stdlib
-> `sqlite3`) geçişi spec 0002 yapar; ayrıntı [`docs/architecture.md`](docs/architecture.md).
-> Aşağıdaki çalıştırma komutları mevcut iskelet içindir ve 0002'de değişecektir.
+> **Durum.** Masaüstü kabuğu hazır (spec 0002): pencere açılır, yerel veri dosyası oluşur ve
+> şeması sürümlenir. Ürün özellikleri — görevler, odak oturumları, notlar — henüz yok; her biri
+> kendi spec'iyle gelecek.
 
 ## Çalıştırma
 
@@ -15,16 +15,21 @@ Gereksinim: [uv](https://docs.astral.sh/uv/) (Python 3.12'yi kendisi kurar).
 
 ```sh
 uv sync                                   # bağımlılıkları uv.lock'tan kurar
-uv run python -m app                      # mevcut iskelet: http://127.0.0.1:8000
+uv run python -m app                      # Notes&MJ penceresini açar
 ```
+
+Veri dosyası: `%LOCALAPPDATA%\Notes-MJ\notes-mj.sqlite3` (bkz. `docs/security.md`).
 
 ## Doğrulama
 
 ```sh
-uv run playwright install chromium        # bir kerelik: mevcut e2e testleri için tarayıcı
-./scripts/check                           # tek doğrulama komutu (--fast: yavaş adımlar hariç)
+./scripts/check                           # tek doğrulama komutu (--fast: arayüz testleri hariç)
 ./scripts/doctor                          # çalışma alanı sağlığı
+./scripts/residue                         # kaynak hijyeni (boşta bir makinede çalıştırın)
 ```
+
+Arayüz testleri pencere açmaz (`QT_QPA_PLATFORM=offscreen`); Linux'ta Qt'nin `libEGL`, `libGL` ve
+`libxkbcommon-x11` kütüphaneleri gerekir (CI bunları kurar).
 
 ## Arayüz tasarımı
 

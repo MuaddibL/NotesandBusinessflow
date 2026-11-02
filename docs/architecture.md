@@ -14,14 +14,7 @@ de birbirine yapışmaz (bootstrap kararı, 2026-11-02).
 Teknoloji: Python 3.12 · **PySide6** (Qt Widgets + QSS) · stdlib **`sqlite3`** (şema sürümü
 `PRAGMA user_version` ile) · uv. Sunucu yok, hesap yok, ağ yok.
 
-> **Geçiş durumu (2026-11-02).** Repodaki kod hâlâ spec 0001'in FastAPI iskeletidir. Bu dokümanda
-> anlatılan yapı **hedeftir**; geçişi spec 0002 yapar: FastAPI/uvicorn/Playwright bağımlılıklarının
-> kaldırılması, `main.py` · `health.py` · `shared/http.py` · `static/` · `tests/e2e/` ve HTTP'ye
-> bağlı integration testlerinin kaldırılması, PySide6 + pytest-qt eklenmesi, `scripts/check.conf`
-> ve `tests/architecture_rules.py` yasak paket kümesinin güncellenmesi. O ana kadar docs ile kod
-> arasındaki fark bilinçlidir ve burada kayıtlıdır (R-10 gerekmez).
-
-Hedef paket düzeni:
+Paket düzeni:
 ```
 app/
   __main__.py              # uygulama girişi: `uv run python -m app`
@@ -60,9 +53,10 @@ Arşiv ve Çöp Kutusu da ayrı modül değildir — her modül kendi öğesinin
 - Olay / mesaj kuyruğu yoktur; ihtiyaç doğarsa önce ADR yazılır.
 
 ## Forbidden dependencies (make them testable)
-1–3, `tests/architecture_rules.py` içindeki genel kurallarla (grimp import grafı) `scripts/check`
-içinde zorlanır: modül başı yapılandırma yoktur, yeni bir modül otomatik kapsanır. 4–6 review'da
-kontrol edilir; 5'in import ayağı spec 0002'de teste bağlanır (yasak paket kümesi güncellenir).
+1–3 ve 5, `tests/architecture_rules.py` içindeki genel kurallarla (grimp import grafı)
+`scripts/check` içinde zorlanır: modül başı yapılandırma yoktur, yeni bir modül otomatik kapsanır.
+Her kural hem sentetik graflarla (kuralın yakaladığını kanıtlar) hem de gerçek graf üzerinde
+denetlenir. 4 ve 6 review'da kontrol edilir.
 1. Bir modül, başka bir modülün `public` dışındaki hiçbir alt paketini import etmez
    (`domain`, `service`, `repository`).
 2. `app.modules.*.domain` şunları import etmez: `PySide6`, `sqlite3` ve her türlü ağ/IO paketi.

@@ -2,7 +2,7 @@
 
 **Notes&MJ** (*My Job*) — tek kişilik, tamamen yerel masaüstü çalışma alanı: birbirine bağlı günlük
 iş planlama (zaman blokları, Eisenhower), odak modu (Pomodoro) ve not alma. Modüler monolit:
-Python 3.12 · PySide6 (Qt) · stdlib `sqlite3` · uv · Windows öncelikli, ağ yok. Kod hâlâ spec 0001'in FastAPI iskeleti; geçişi spec 0002 yapar.
+Python 3.12 · PySide6 (Qt) · stdlib `sqlite3` · uv · Windows öncelikli, ağ yok.
 
 ## Operating mode
 

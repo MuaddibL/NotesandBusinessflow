@@ -68,7 +68,7 @@ Buradaki her kural ya araçla zorlanır (tercih edilen) ya da review'da kontrol 
   yasağı (`DTZ`), simplify, ruff kuralları. `ruff format --check` — biçim.
 - `mypy --strict` — `app/` için tam tip denetimi.
 - Mimari test (`tests/architecture_rules.py`, grimp) — `docs/architecture.md` "Forbidden
-  dependencies" 1–3; `pytest` adımında koşar. Yasak paket kümesi spec 0002'de yeni yığına göre
-  güncellenir (PySide6, `sqlite3`, ağ yığını).
+  dependencies" 1–3 ve 5; `pytest` adımında koşar. Ağ ve ORM yasağı gerçek import grafında da
+  doğrulanır.
 - `uv lock --check` — `uv.lock` `pyproject.toml` ile tutarlı.
 - Hepsi `scripts/check` içinde (`scripts/check.conf`).
