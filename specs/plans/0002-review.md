@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0002-plan.md`
 - Change set: `git diff main..HEAD` (`feature/0002-desktop-shell`, `0581f1c..3d1d848`; 48 dosya, +2170/-1106)
 - Reviewed by / on: bağımsız salt-okunur reviewer oturumu, 2026-11-03
-- Status: Triaged (MuaddibL, 2026-11-03) — fix round in progress
+- Status: Fixes applied (2026-11-03) — awaiting re-review of the fix diff
 
 Bu dosya bir plan değildir (`scripts/doctor` yalnızca `NNNN-plan.md` dosyalarını okur). REVIEW
 segmentinin handoff'u olarak durur; VERIFY ve PR açıklaması buradan beslenir.
@@ -44,6 +44,36 @@ temel çıkmadı, bu yüzden olduğu gibi kabul edildi. Son kolon reviewer'ın �
 
 Fix round (`prompts/build.md` §fixes): bulgu başına tek commit, `[review 0002/F-n]` referansıyla;
 her commit sonrası `--fast` yeşil, fix diff'i review'a dönmeden önce full yeşil.
+
+## Fix round — ne yapıldı
+
+| # | Commit | Ne değişti |
+|---|---|---|
+| F-1 | `6d0bdc7` | `configure_logging`: veri dizinine tek dosya handler'ı, formatta `correlation_id`, alanı garantileyen filtre. Kayıt artık gerçekten okunabilir. |
+| F-2 | `28c2790` | `main()` yolları ve kutu gösterimini parametre alıyor, excepthook adlandırılmış fonksiyon. `tests/ui/test_entry_point.py` ile 3 test. |
+| F-4 | `9f3b7ad` | Açılışta odak kenar menüsüne veriliyor (önce hiçbir yerde değildi, ok tuşları tıklamadan çalışmıyordu) + 3 test. |
+| F-6 | `1f72f79` | Test adı iddiasına indirildi; `test_dialog_hides_exception_details` kimlik eşitliğini doğrudan doğruluyor. |
+| F-7 | `f6bf2f7` | `SchemaTooNewError` kendi Türkçe metniyle; reddetme yolunun testi. |
+| F-8 | `55fc974` | Eksik çiftler ve dekoratif renkler bildirildi; "stylesheet'in çizdiği her renk denetlenmiştir" testi. |
+| F-3 | `02307aa` | Geçiş adımı başına açık transaction + rollback. **Gözlem bulguyu ağırlaştırdı:** yarıda kalan geçiş dosyayı kalıcı açılamaz bırakıyordu. |
+| F-10 | `c21c68b` | Plan dosya listesi diff ile hizalandı (tarihli notlarla). |
+| F-5 | — | Kod değişmedi. `workflows/bootstrap.md`'ye "bootstrap ürün kodu silmez" kuralı eklendi; sapma PR açıklamasına yazılacak (aşağıda). |
+| F-9 | — | `docs/conventions.md` koda uyduruldu: testlerin okuduğu widget alanları öneksiz; `show_problem` adı fiilî API ile hizalandı. |
+| F-11 | — | Noise; aksiyon yok. |
+
+**F-4'te reviewer'ın önerisinden sapıldı.** Reviewer `QListWidget#sections::item:focus` için bir
+QSS kuralı önermişti. Ölçüldü: gerçek odak ve aktif pencereyle bile Qt `::item:focus`, `:focus` ve
+`::item:selected:!active` için tek piksel boyamıyor (kontrol: seçim değişikliği pikselleri
+değiştiriyor). Kural ölü CSS olurdu. Bunun yerine klavyeyi takip eden seçim göstergesi kaldı ve
+test stylesheet'i geri okumak yerine iki render'ı karşılaştırıyor.
+
+## Pull request'e yazılacak (F-5)
+
+0002'nin sileceği 12 kod/test dosyası, spec ve plan var olmadan önce `4081853`
+("docs: reposition the workspace for Notes&MJ") ile silindi — AGENTS.md invariant 1 ve 2'nin
+ihlali, ve `docs:` tipiyle plan referanssız bir commit (`docs/git.md`). Üründe kalıcı kusur yok:
+HEAD'de sonuç planın hedeflediği yer. Geri alınmadı, çünkü revert + yeniden commit net zarardı.
+Tekrarı `workflows/bootstrap.md`'ye eklenen kuralla kapatıldı.
 
 ## Findings
 

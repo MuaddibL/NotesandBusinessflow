@@ -26,7 +26,9 @@ Buradaki her kural ya araçla zorlanır (tercih edilen) ya da review'da kontrol 
 - Domain tipleri sözlükteki İngilizce adlarla: `Task`, `DayPlan`, `TimeBlock`, `FocusSession`,
   `Note`, `Project`, `Tag`.
 - Hata sınıfları `<Neden>Error` (`OverlappingTimeBlockError`), hepsi `DomainError` alt sınıfı.
-- Qt widget alanları `_` önekiyle örnek değişkeni, sinyal slotları `_on_<nesne>_<olay>`.
+- Qt widget alanları: testlerin okuduğu widget'lar öneksiz (`self.sections`), yalnızca içeride
+  kalanlar `_` önekli; sinyal slotları `_on_<nesne>_<olay>`. (Kural 2026-11-03'te daraltıldı:
+  `_` ile gizlenen bir alana testten erişmek Python'da çelişkidir — review 0002/F-9.)
 - Testler: dosya `test_<davranış>.py`, fonksiyon `test_<ne>_<koşul>_<beklenen>`; BR testinin adı
   veya docstring'i kuralı anar (`BR-1`).
 - Tablo adları çoğul `snake_case` (`tasks`, `time_blocks`); sütunlar `snake_case`.
@@ -36,8 +38,10 @@ Buradaki her kural ya araçla zorlanır (tercih edilen) ya da review'da kontrol 
 - İş kuralı ihlali → `app.shared` içindeki `DomainError` alt sınıfı fırlatılır (`code` taşır,
   makine okunur ve İngilizce).
 - `sqlite3` hataları `repository` sınırında sarmalanır; `sqlite3` tipleri modül dışına sızmaz.
-- `ui` katmanı `DomainError`'ı yakalar ve kullanıcıya Türkçe başlık + açıklama gösterir; tek bir
-  yardımcı (`show_problem`) kullanılır, her yerde ayrı diyalog kurulmaz.
+- `ui` katmanı `DomainError`'ı yakalar ve kullanıcıya Türkçe başlık + açıklama gösterir; diyaloglar
+  `app/ui/error_dialog.py`'deki ortak kuruculardan gelir (`storage_error_box`,
+  `unexpected_error_box`), her yerde ayrı diyalog kurulmaz. (Ad 2026-11-03'te fiilen kullanılan
+  API ile hizalandı — review 0002/F-9.)
 - Beklenmeyen hata → korelasyon ID'li log kaydı + kullanıcıya genel mesaj. Stack trace, SQL, dosya
   yolu ve kullanıcı içeriği kullanıcıya **asla** gösterilmez (`docs/security.md`).
 - Uygulama, veritabanı açılamadığında sessizce boş başlamaz: açık bir hata ekranı gösterir.

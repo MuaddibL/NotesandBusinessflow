@@ -12,7 +12,11 @@ dosyalardır.
 - **Uygulama ağa çıkmaz.** Telemetri, kullanım istatistiği, kilitlenme raporu, güncelleme kontrolü
   ve bulut yedekleme yoktur. Bu bir özelliktir, eksiklik değil (`docs/architecture.md`, yasak 5–6).
 - Kullanıcı içeriği (not metni, görev başlığı, proje adı) loglara **yazılmaz**; loglarda yalnızca
-  ID, olay adı ve korelasyon ID'si bulunur.
+  ID, olay adı ve korelasyon ID'si bulunur. **Tek istisna yığın izidir:** beklenmeyen bir hatanın
+  yığın izi, içindeki istisna metniyle birlikte loga yazılır — onsuz tek kişilik ve ağsız bir
+  uygulamada hata teşhis edilemez (spec 0002/PB-5; review 0002/F-6, 2026-11-03). İstisna metnine
+  kullanıcı içeriği konulmaz; log dosyası veri dosyasıyla aynı dizinde, aynı kullanıcı izinleriyle
+  durur ve makineden çıkmaz.
 - Yedekleme kullanıcının sorumluluğundadır; uygulama yalnızca şema geçişinden önce veritabanı
   dosyasının bir kopyasını alır (`docs/conventions.md`, Data rules).
 
