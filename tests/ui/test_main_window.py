@@ -88,10 +88,24 @@ def test_sidebar_takes_keyboard_focus_on_open(qtbot: QtBot) -> None:
     qtbot.addWidget(window)
     window.show()
 
-    assert window.sections.focusPolicy() & Qt.FocusPolicy.TabFocus, "Tab must reach the sidebar"
     # focusWidget, not hasFocus: offscreen the window is never activated, but the widget that
     # holds the focus inside it is what decides where the first key press lands.
     assert window.focusWidget() is window.sections, "the arrow keys work without clicking first"
+
+
+def test_tab_reaches_the_sidebar(qtbot: QtBot) -> None:
+    """The spec names Tab next to the arrow keys, and focusPolicy is a setting, not a behaviour."""
+    window = MainWindow()
+    qtbot.addWidget(window)
+    window.show()
+    window.activateWindow()
+    qtbot.waitUntil(window.isActiveWindow)
+    window.sections.clearFocus()
+    assert window.focusWidget() is None, "the test starts with the focus nowhere"
+
+    qtbot.keyClick(window, Qt.Key.Key_Tab)
+
+    assert window.focusWidget() is window.sections
 
 
 def test_arrow_keys_move_through_the_sections(qtbot: QtBot) -> None:
