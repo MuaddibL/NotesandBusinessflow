@@ -47,8 +47,9 @@ jobs:
           uvx pip-audit --strict -r "$RUNNER_TEMP/requirements.txt"
 
   residue:
-    # Resource hygiene proof (docs/testing.md): check twice back to back leaves nothing running —
-    # on a clean runner, so no other activity is mistaken for a survivor. Both profiles.
+    # Resource hygiene proof (docs/testing.md): check twice back to back leaves nothing of its own
+    # running. The runner is not idle — kernel threads come and go during a run — so the script
+    # judges each survivor by its ancestry rather than by the process count. Both profiles.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

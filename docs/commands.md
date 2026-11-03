@@ -92,14 +92,19 @@ Mode is the `Mode:` line in `AGENTS.md`, set at bootstrap (`workflows/README.md`
 
 ### `scripts/residue`
 - **What it does:** the residue test (`docs/testing.md`, Resource hygiene) — runs check twice and
-  names every process, or memory drop over the tolerance, that outlives a run. `--fast` tests the
-  fast profile.
+  names every process check could have started, or memory drop over the tolerance, that outlives
+  a run. Survivors the operating system started (kernel threads, services) are listed under their
+  own heading with the reason and do not decide the result; an ancestry that cannot be walked
+  counts. `--fast` tests the fast profile.
 - **When to use it:** at bootstrap (both profiles), and whenever `scripts/check.conf` changes.
-- **Reads / writes:** runs `scripts/check`; writes only a temp dir, deleted on exit.
+- **Reads / writes:** runs `scripts/check` and `scripts/lib/classify-survivors` (the ownership
+  split, kept separate so `scripts/selftest` can feed it synthetic process tables); writes only a
+  temp dir, deleted on exit.
 - **Stops at:** `RESIDUE CLEAN (<profile>, 2 runs)` (exit 0) or `RESIDUE FOUND (<profile>)` (exit 1).
 - **Lite / Strict:** no difference.
 - **Refusal:** a red check stops it: `RESIDUE TEST ABORTED (<profile>): check failed in run <n> — the residue test needs a green check`.
-- **Common mistake:** running it on a busy machine — whatever starts meanwhile is listed too.
+- **Common mistake:** reading the ignored list as a failure — it is there to be auditable, not to
+  be acted on. Memory still reads best on an otherwise idle machine.
 
 ### `scripts/selftest`
 - **What it does:** proves that `scripts/check`, `scripts/doctor` and `scripts/residue` behave as

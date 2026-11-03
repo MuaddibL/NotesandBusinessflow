@@ -201,7 +201,7 @@ branch protection setting makes "no force-push" Enforced for every tool.
 | `adapters/` | Per-tool wiring. `scripts/init <tool>` installs one. |
 | `scripts/check` | The single verification contract: humans, agents, hooks, and CI all run this one command. Stack-specific internals live in `check.conf`, written at bootstrap. `--fast` runs only the steps tagged `[fast]` for the inner loop; only the full run is evidence. Reports each step's duration and the total. |
 | `scripts/doctor` | Workspace health: structure, configuration state, adapter presence, spec/plan gate consistency (`--strict` in CI), evidence hygiene warnings. |
-| `scripts/residue` | The residue test (`docs/testing.md`, Resource hygiene): runs check twice and names every process or memory drop that outlives a run. Bootstrap runs it for both profiles; rerun it whenever check.conf changes. |
+| `scripts/residue` | The residue test (`docs/testing.md`, Resource hygiene): runs check twice and names every process check could have started, or memory drop, that outlives a run; processes the OS started are listed apart and do not decide the result. Bootstrap runs it for both profiles; rerun it whenever check.conf changes. |
 | `scripts/selftest` | Proves `scripts/check`, `scripts/doctor` and `scripts/residue` behave as documented: every scenario in a throwaway copy outside the repo. Runs in CI. |
 | `scripts/init` | Installs an adapter; keeps existing files unless `--force`. |
 | `CHANGELOG.md` | What changed between versions of the workspace, for template users upgrading their copy. |
