@@ -66,9 +66,11 @@ RADIUS_PX: dict[str, int] = {"default": 2, "lg": 4, "xl": 8, "full": 12}
 
 # The foreground/background token pairs the interface puts together, plus the ones the error
 # surfaces are reserved for. The accessibility criterion is proven over exactly this list
-# (tests/unit/test_theme_contrast.py), and a test holds the other direction too: every colour the
-# stylesheet draws has to appear here or in DECORATIVE_COLORS, so a new pairing cannot go
-# unchecked by being forgotten.
+# (tests/unit/test_theme_contrast.py). A second test holds one direction of the other way round:
+# every *colour* the stylesheet draws appears here or in DECORATIVE_COLORS. It does not check
+# pairings — a new combination of two colours that are already in this list passes it unseen
+# (error on primary-container would be 3.70:1), so adding a pairing to the stylesheet still means
+# adding it here by hand.
 TEXT_PAIRS: tuple[tuple[str, str], ...] = (
     ("on-surface", "background"),
     ("on-surface", "surface"),
