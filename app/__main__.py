@@ -50,7 +50,9 @@ def main(
 ) -> int:
     # QApplication is a singleton: under pytest-qt one already exists and owns the run.
     existing = QApplication.instance()
-    app = existing if isinstance(existing, QApplication) else QApplication(argv or sys.argv)
+    # `argv or sys.argv` would quietly swap an explicitly empty argv for pytest's own.
+    arguments = sys.argv if argv is None else argv
+    app = existing if isinstance(existing, QApplication) else QApplication(arguments)
     app.setStyleSheet(stylesheet())
 
     try:
