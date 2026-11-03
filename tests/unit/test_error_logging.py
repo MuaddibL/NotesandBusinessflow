@@ -76,8 +76,13 @@ def test_a_record_without_an_id_still_formats(
     assert "something else entirely" in path.read_text(encoding="utf-8")
 
 
-def test_log_record_excludes_user_content(caplog: pytest.LogCaptureFixture) -> None:
-    """The message is a constant with nothing interpolated into it — no channel for user text."""
+def test_log_message_has_no_interpolated_content(caplog: pytest.LogCaptureFixture) -> None:
+    """The message is a constant with nothing interpolated into it — no channel for user text.
+
+    Deliberately not named "excludes user content": PB-5 exempts the traceback, and the exception
+    text does reach the record through ``exc_info``. What this pins is the only channel the spec
+    does close — the message itself.
+    """
     with caplog.at_level(logging.ERROR):
         report_unexpected(_boom("gizli not metni"))
 

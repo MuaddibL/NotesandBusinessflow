@@ -1,5 +1,6 @@
 """CB-6, CB-7: failures are shown plainly, and never leak what caused them."""
 
+import logging
 from pathlib import Path
 
 import pytest
@@ -37,10 +38,11 @@ def test_unexpected_error_dialog_shows_correlation_id(qtbot: QtBot) -> None:
 
 
 def test_dialog_hides_exception_details(qtbot: QtBot, caplog: pytest.LogCaptureFixture) -> None:
-    try:
-        raise RuntimeError("gizli ayrıntı C:/Users/birisi/notlar.sqlite3")
-    except RuntimeError as error:
-        correlation_id = report_unexpected(error)
+    with caplog.at_level(logging.ERROR):
+        try:
+            raise RuntimeError("gizli ayrıntı C:/Users/birisi/notlar.sqlite3")
+        except RuntimeError as error:
+            correlation_id = report_unexpected(error)
 
     box = unexpected_error_box(None, correlation_id)
     qtbot.addWidget(box)
@@ -49,3 +51,6 @@ def test_dialog_hides_exception_details(qtbot: QtBot, caplog: pytest.LogCaptureF
     assert "gizli ayrıntı" not in shown
     assert "C:/Users/birisi/notlar.sqlite3" not in shown
     assert correlation_id in shown, "the id is the only bridge to the log record"
+    # CB-7 promises the same id in both places; assert it here rather than leave it to the
+    # transitivity of two separate tests.
+    assert caplog.records[-1].correlation_id == correlation_id
