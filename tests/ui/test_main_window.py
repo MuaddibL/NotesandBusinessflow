@@ -71,7 +71,13 @@ def test_unbuilt_section_shows_shared_empty_state(qtbot: QtBot) -> None:
         assert detail.text() == EMPTY_STATE_DETAIL
 
 
-def test_closing_window_leaves_nothing_running(qtbot: QtBot) -> None:
+def test_closing_window_releases_what_it_owns(qtbot: QtBot) -> None:
+    """Named for what it asserts.
+
+    CB-8 also promises the process ends cleanly; that rests on the application owning no timer
+    or thread at all (``grep -rn "QTimer\\|QThread\\|threading" app/`` is empty) and is recorded
+    in the pull request as a manual observation, not claimed here (review 0002/V-4).
+    """
     released: list[str] = []
     window = MainWindow(on_close=lambda: released.append("connection"))
     qtbot.addWidget(window)
