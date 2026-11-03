@@ -91,6 +91,60 @@ residue
 exits 1 "residue: leaked process";               has "RESIDUE FOUND (full)" "leak is reported"
 has "$LEAK" "the survivor is named with its command line"
 
+# --- scripts/lib/classify-survivors: synthetic process tables. A green residue run on a real
+# machine says nothing about the classification — the cases that matter (a kernel thread, an
+# orphan of check's own, an ancestry that cannot be walked) are fed in by hand.
+mkdir -p "$C/scripts/lib"
+cp "$ROOT/scripts/lib/classify-survivors" "$C/scripts/lib/classify-survivors"
+T=$(printf '\t')
+classify() { survivors=$1; shift; out=$(sh "$C/scripts/lib/classify-survivors" "$@" < "$survivors" 2>&1); rc=$?; }
+
+echo "== scripts/lib/classify-survivors =="
+classify /dev/null
+exits 2 "classify: no arguments";                has "usage:" "classify: prints usage"
+classify /dev/null solaris "$C/table"
+exits 2 "classify: unknown platform"
+classify /dev/null posix "$TMP/no-such-table"
+exits 2 "classify: unreadable table";            has "cannot read process table" "classify: names the missing table"
+
+# POSIX. pid 1 is deliberately NOT a root: an orphan of check's own is reparented to init.
+printf '%s\n' \
+  "1${T}0${T}/sbin/init"                 "2${T}0${T}[kthreadd]" \
+  "77${T}2${T}[kworker/R-mlx5_cmd]"      "90${T}1${T}python -m pytest (orphaned by check)" \
+  "40${T}1${T}/bin/sh scripts/check"     "55${T}40${T}uv run pytest" \
+  "61${T}61${T}its own parent"           > "$C/table"
+printf '%s\n' "77${T}2${T}[kworker/R-mlx5_cmd]" "90${T}1${T}python -m pytest (orphaned by check)" \
+  "55${T}40${T}uv run pytest" "99${T}12345${T}parent is gone" "61${T}61${T}its own parent" > "$C/survivors"
+classify "$C/survivors" posix "$C/table"
+exits 0 "classify: posix table"
+has "ignored${T}kernel thread${T}77"  "posix: a kernel thread is the kernel's, not check's"
+has "counted${T}90"                   "posix: an orphan reparented to init still counts"
+has "counted${T}55"                   "posix: a process of check's own counts"
+has "counted${T}99"                   "posix: ancestry that cannot be walked counts (fail closed)"
+has "counted${T}61"                   "posix: a process that is its own parent counts, and does not hang"
+
+# Windows. The service control manager is the root; session id is not a criterion — svchost and
+# SearchProtocolHost were both observed running in the interactive session (plan 0003/R-1).
+printf '%s\n' \
+  "0${T}0${T}System Idle Process"  "4${T}0${T}System"  "1408${T}1304${T}wininit.exe" \
+  "1504${T}1408${T}C:\\WINDOWS\\system32\\services.exe" \
+  "9804${T}1504${T}C:\\WINDOWS\\system32\\SearchIndexer.exe /Embedding" \
+  "20908${T}9804${T}SearchProtocolHost.exe Global\\UsGthrPipe" \
+  "7796${T}1504${T}C:\\WINDOWS\\system32\\svchost.exe -k netsvcs" \
+  "300${T}4${T}Registry" \
+  "25300${T}25156${T}C:\\Program Files\\Git\\usr\\bin\\bash.exe" \
+  "16168${T}25300${T}python.exe -m pytest" > "$C/table"
+printf '%s\n' "20908${T}9804${T}SearchProtocolHost.exe Global\\UsGthrPipe" \
+  "7796${T}1504${T}C:\\WINDOWS\\system32\\svchost.exe -k netsvcs" "300${T}4${T}Registry" \
+  "16168${T}25300${T}python.exe -m pytest" "31000${T}60606${T}python.exe, parent is gone" > "$C/survivors"
+classify "$C/survivors" windows "$C/table"
+exits 0 "classify: windows table"
+has "ignored${T}OS service${T}7796"    "windows: a service host is the SCM's"
+has "ignored${T}OS service${T}20908"   "windows: a service's grandchild is too"
+has "ignored${T}system process${T}300" "windows: a child of System is the system's"
+has "counted${T}16168"                 "windows: a process of check's own counts"
+has "counted${T}31000"                 "windows: ancestry that cannot be walked counts (fail closed)"
+
 # --- scripts/doctor: a git-initialised copy of the ANEW core only, reset between scenarios ---
 # Only what doctor reads: no application code, and no real specs or plans (a project's own specs
 # would collide with the scenarios) — so the selftest behaves the same in the template and in
