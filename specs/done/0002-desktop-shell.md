@@ -1,6 +1,6 @@
 # Spec 0002 — desktop shell (mini)
 
-- Status: In progress
+- Status: Shipped
 - Mode: lite
 - Plan: `specs/plans/0002-plan.md`
 - Source: CR-2026-11-02-desktop-shell — bootstrap yeniden konumlandırma kararı (2026-11-02)
@@ -20,45 +20,45 @@ gerekiyor çünkü dokümanlar hedefi, kod hâlâ eski ürünü anlatıyor; bu f
 yazılamaz.
 
 ## Changed behavior
-- [ ] CB-1 — Belgelenen tek komut çalıştırıldığında bir **masaüstü penceresi** açılır; pencere
+- [x] CB-1 — Belgelenen tek komut çalıştırıldığında bir **masaüstü penceresi** açılır; pencere
   başlığı birebir `Notes&MJ`'dir. Ürün adının göründüğü her arayüz öğesinde `&` karakteri de
   görünür (kısayol işareti olarak yorumlanıp yutulmaz). Uygulama hiçbir ağ portu dinlemez ve
   tarayıcı gerektirmez.
-- [ ] CB-2 — Pencere, kenar menüsünde tam olarak şu bölümleri gösterir: **Görev Panosu ·
+- [x] CB-2 — Pencere, kenar menüsünde tam olarak şu bölümleri gösterir: **Görev Panosu ·
   Notlarım & Belgeler · Günlük Planlayıcı · Projeler · Etiketler & Arşiv**. Senkronizasyon öğeleri,
   Ayarlar ve "Son Projeler" bulunmaz. Henüz yapılmamış her bölüm seçildiğinde **tek ortak bir boş
   durum şablonu** görünür; şablonda yalnızca bölüm adı değişkendir ve hizmetin hazır olmadığı
   Türkçe bildirilir. Uygulama hata vermez.
-- [ ] CB-3 — İlk çalıştırmada kullanıcının yerel uygulama verisi dizininde (`docs/security.md`,
+- [x] CB-3 — İlk çalıştırmada kullanıcının yerel uygulama verisi dizininde (`docs/security.md`,
   Veri ve gizlilik) bir veri dosyası oluşturulur; sonraki çalıştırmalar aynı dosyayı yeniden
   kullanır, üzerine yazmaz.
-- [ ] CB-4 — Veri dosyası bir şema sürümü taşır. Önceki sürüm numarasını taşıyan **sentetik olarak
+- [x] CB-4 — Veri dosyası bir şema sürümü taşır. Önceki sürüm numarasını taşıyan **sentetik olarak
   üretilmiş** bir dosya açıldığında şema ileri taşınır ve içindeki veri korunur — bu spec şemanın
   ilk sürümünü yarattığı için geçiş, gerçek bir eski dosyayla değil bu üretilmiş dosyayla
   kanıtlanır. Geçişi iki kez uygulamak veriyi bozmaz.
-- [ ] CB-5 — Geçişten önce veri dosyasının bir yedeği, aynı dizine, kaynak şema sürümünü ve tarihi
+- [x] CB-5 — Geçişten önce veri dosyasının bir yedeği, aynı dizine, kaynak şema sürümünü ve tarihi
   içeren bir adla alınır. (Yedeklerin temizlenmesi kapsam dışıdır.)
-- [ ] CB-6 — Veri dosyası açılamadığında (bozuk dosya, yazma izni yok) uygulama sessizce boş
+- [x] CB-6 — Veri dosyası açılamadığında (bozuk dosya, yazma izni yok) uygulama sessizce boş
   başlamaz: ne olduğunu Türkçe anlatan açık bir hata ekranı gösterir.
-- [ ] CB-7 — Beklenmeyen bir hata, genel bir Türkçe mesaj ve bir korelasyon kimliği taşıyan bir
+- [x] CB-7 — Beklenmeyen bir hata, genel bir Türkçe mesaj ve bir korelasyon kimliği taşıyan bir
   diyalogla gösterilir; bu kimlik, aynı hatanın PB-5'teki log kaydındaki kimliğin **aynısıdır**.
   Diyalogda istisna mesajı, yığın izi veya dosya yolu bulunmaz.
-- [ ] CB-8 — Pencere kapatıldığında süreç temiz biter: arkada açık pencere, zamanlayıcı veya
+- [x] CB-8 — Pencere kapatıldığında süreç temiz biter: arkada açık pencere, zamanlayıcı veya
   çalışan süreç kalmaz. (Bu, uygulamanın kendisiyle ilgilidir; test süreçlerinin hijyeni PB-3.)
 
 ## Preserved behavior
-- [ ] PB-1 — `./scripts/check --fast` `ui` işaretli testleri çalıştırmaz, geri kalanını çalıştırır;
+- [x] PB-1 — `./scripts/check --fast` `ui` işaretli testleri çalıştırmaz, geri kalanını çalıştırır;
   `./scripts/check` tümünü çalıştırır; iki profilin test sayılarının toplamı tüm testlerin
   sayısına eşittir. (0001/AC-11)
-- [ ] PB-2 — Bir modülün başka bir modülün iç paketini import etmesi, domain katmanının
+- [x] PB-2 — Bir modülün başka bir modülün iç paketini import etmesi, domain katmanının
   **`docs/architecture.md`'deki güncel yasak kümesinden** bir kütüphane import etmesi veya
   `app.shared`'in bir modülü import etmesi `./scripts/check`'i kırmızı yapar (her kural için
   tekrarlanabilir gözlem). Yasak küme bu değişiklikle yeni yığına göre güncellenir. (0001/AC-10)
-- [ ] PB-3 — `./scripts/residue` ve `./scripts/residue --fast`, check'e ait hayatta kalan süreç
+- [x] PB-3 — `./scripts/residue` ve `./scripts/residue --fast`, check'e ait hayatta kalan süreç
   raporlamaz; testler başarısız olduğunda veya zaman aşımına uğradığında da arkada süreç kalmaz.
   (0001/AC-12, kaynak hijyeni ayağı)
-- [ ] PB-4 — Uygulama çalışırken kendi dışına hiçbir istek göndermez. (0001/AC-3, güçlenerek)
-- [ ] PB-5 — Beklenmeyen hata, hata ayrıntısıyla birlikte bir korelasyon kimliği altında loga
+- [x] PB-4 — Uygulama çalışırken kendi dışına hiçbir istek göndermez. (0001/AC-3, güçlenerek)
+- [x] PB-5 — Beklenmeyen hata, hata ayrıntısıyla birlikte bir korelasyon kimliği altında loga
   yazılır; iki ayrı hata iki farklı kimlik üretir. Logda yığın izi dışında dosya yolu, kullanıcı
   içeriği veya kişisel veri bulunmaz. (0001/AC-7, 0001/AC-8)
 
@@ -100,7 +100,11 @@ odaklanan öğe görsel olarak bellidir.
 - Windows dışı platformlarda test ve paketleme.
 
 ## Definition of Done
-- [ ] `scripts/check` green
-- [ ] Independent review done; real findings fixed, noise rejected with written rationale
-- [ ] Criterion ↔ evidence table complete for CB-* **and** PB-* (UI: before/after screenshots)
-- [ ] Spec moved to `specs/done/` (immutable there)
+- [x] `scripts/check` green — `CHECK GREEN (full, 6 steps, 8 s)`, 53 + 17 = 70 test (2026-11-03)
+- [x] Independent review done; real findings fixed, noise rejected with written rationale —
+  iki review turu + VERIFY, hepsi `specs/plans/0002-review.md`'de; 20 bulgunun 16'sı real ve
+  düzeltildi, 4'ü noise ve gerekçesi yazıldı
+- [x] Criterion ↔ evidence table complete for CB-* **and** PB-* — `specs/plans/0002-plan.md`,
+  Criterion ↔ test map (43 referansın 43'ü diskte doğrulandı); ekran görüntüleri PR'da.
+  **PB-3'ün kanıtı CI'daki residue job'ıdır** — merge, o job yeşil olmadan yapılmaz (V-6)
+- [x] Spec moved to `specs/done/` (immutable there)

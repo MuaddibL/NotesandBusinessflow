@@ -1,6 +1,6 @@
 # Review 0002 — desktop shell
 
-- Spec: `specs/active/0002-desktop-shell.md`
+- Spec: `specs/done/0002-desktop-shell.md`
 - Plan: `specs/plans/0002-plan.md`
 - Change set: `git diff main..HEAD` (`feature/0002-desktop-shell`, `0581f1c..3d1d848`; 48 dosya, +2170/-1106)
 - Reviewed by / on: bağımsız salt-okunur reviewer oturumu, 2026-11-03
