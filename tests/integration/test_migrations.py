@@ -104,6 +104,40 @@ def test_backup_name_carries_source_version_and_date(db_path: Path) -> None:
     assert expected.exists()
 
 
+def _explodes_after_its_ddl(connection: sqlite3.Connection) -> None:
+    connection.execute("ALTER TABLE people ADD COLUMN nickname TEXT")
+    raise RuntimeError("migration failed half-way")
+
+
+def test_a_failed_step_leaves_the_file_as_it_was(db_path: Path) -> None:
+    """Otherwise the next run re-applies the step onto a changed schema and can never open it."""
+    connection = _older_file(db_path)
+    try:
+        with pytest.raises(RuntimeError):
+            migrate(connection, db_path, migrations=(_create_people, _explodes_after_its_ddl))
+
+        assert schema_version(connection) == 1
+        columns = [row[1] for row in connection.execute("PRAGMA table_info(people)")]
+        assert columns == ["name"], "the half-applied DDL must not survive the failure"
+        assert connection.execute("SELECT name FROM people").fetchall() == [("Berk",)]
+    finally:
+        connection.close()
+
+
+def test_the_file_can_still_be_migrated_after_a_failed_attempt(db_path: Path) -> None:
+    connection = _older_file(db_path)
+    try:
+        with pytest.raises(RuntimeError):
+            migrate(connection, db_path, migrations=(_create_people, _explodes_after_its_ddl))
+
+        assert migrate(connection, db_path, migrations=VERSION_2) == 2
+        row = connection.execute("SELECT name, nickname FROM people").fetchone()
+    finally:
+        connection.close()
+
+    assert row == ("Berk", None), "a fixed build must be able to pick the file up again"
+
+
 def test_a_file_from_a_newer_version_is_refused_and_left_alone(db_path: Path) -> None:
     """A file ahead of this build is a mismatch, and the user is told that, not "maybe corrupt"."""
     connection = open_database(db_path, migrations=VERSION_2)

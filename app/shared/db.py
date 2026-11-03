@@ -63,9 +63,20 @@ def migrate(
     if current > 0:
         shutil.copy2(path, backup_path(path, current, now or datetime.now(UTC)))
     for index in range(current, target):
-        migrations[index](connection)
-        _set_schema_version(connection, index + 1)
-    connection.commit()
+        # One explicit transaction per step. sqlite3 only opens implicit transactions for DML, so
+        # without BEGIN a CREATE TABLE or an ALTER TABLE commits on its own: a step that failed
+        # after its DDL left the schema changed while user_version still pointed at the old
+        # version, and the next run re-applied the same migration onto it and could never open
+        # the file again (review 0002/F-3). Per step rather than per run, so a long upgrade does
+        # not hold a write lock over every migration at once.
+        connection.execute("BEGIN")
+        try:
+            migrations[index](connection)
+            _set_schema_version(connection, index + 1)
+        except BaseException:
+            connection.rollback()
+            raise
+        connection.commit()
     return target
 
 
