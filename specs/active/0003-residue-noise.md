@@ -1,6 +1,6 @@
 # Spec 0003 — residue noise (mini)
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0003-plan.md`
 - Source: CR-2026-11-03-residue-noise — spec 0002'nin PR'ında (#1) `residue` job'ının aynı commit
@@ -36,10 +36,9 @@ kalıntıyı da görünmez kılar.
 - [ ] CB-3 — Check'e ait bir süreç hayatta kaldığında betik hâlâ kırmızı biter (çıkış kodu 1),
   o süreci PID ve komut satırıyla adlandırır ve bugünkü `RESIDUE FOUND` satırını verir.
 
-  Kanıt yöntemi: kalıcı bir kırmızı testle değil, **tekrarlanabilir bir gözlemle** — elle
-  başlatılıp arkada bırakılan uzun ömürlü bir süreçle (ör. `python -c "import time;
-  time.sleep(60)"`). `scripts/check.conf` değiştirilmez ve betiğe geçici satır eklenmez; suite
-  kalıcı olarak yeşil kalır. (0001/AC-12'nin kullandığı desenin aynısı.)
+  Kanıt yöntemi: `scripts/selftest`'in kasıtlı olarak bir süreç sızdıran senaryosu — depoda
+  zaten var ve CI'daki `doctor` job'ında koşuyor. Elle gözlem, var olan otomatik bir testin
+  yerine geçmez. (Plan 0003/R-6, onaylandı 2026-11-04.)
 - [ ] CB-4 — `docs/testing.md` Resource hygiene **rule 1 ve rule 2** kuralın yeni tanımını yazar:
   ölçüt "süreç sayısı başlangıç değerine döner" / "no survivors of any kind" değil, "**check'e
   ait** hiçbir süreç hayatta kalmaz"dır. İki kural birbiriyle ve betikle aynı şeyi söyler.
