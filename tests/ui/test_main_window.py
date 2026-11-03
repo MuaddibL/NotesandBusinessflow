@@ -131,7 +131,14 @@ def test_arrow_keys_move_through_the_sections(qtbot: QtBot) -> None:
 
 
 def test_moving_the_keyboard_changes_what_the_sidebar_looks_like(qtbot: QtBot) -> None:
-    """Rendered and compared: which section the keyboard is on has to be visible."""
+    """Rendered and compared: which section the keyboard is on has to be visible.
+
+    What it does *not* guard is the theme's share of that. Measured: deleting the
+    ``::item:selected`` rule from the stylesheet leaves this green, because Qt distinguishes the
+    current item by itself. The criterion still holds in that case — the section is still
+    visible — so this is the honest scope, not a weakness to work around; the stylesheet's own
+    appearance is judged from the screenshots in the pull request (review 0002/V-2).
+    """
     window = MainWindow()
     window.setStyleSheet(stylesheet())
     qtbot.addWidget(window)
