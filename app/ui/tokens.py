@@ -64,13 +64,17 @@ SPACING_PX: dict[str, int] = {
 
 RADIUS_PX: dict[str, int] = {"default": 2, "lg": 4, "xl": 8, "full": 12}
 
-# The foreground/background token pairs the interface actually puts together. The accessibility
-# criterion is proven over exactly this list (tests/unit/test_theme_contrast.py); a new pairing
-# in the stylesheet belongs here too, or it goes unchecked.
+# The foreground/background token pairs the interface puts together, plus the ones the error
+# surfaces are reserved for. The accessibility criterion is proven over exactly this list
+# (tests/unit/test_theme_contrast.py), and a test holds the other direction too: every colour the
+# stylesheet draws has to appear here or in DECORATIVE_COLORS, so a new pairing cannot go
+# unchecked by being forgotten.
 TEXT_PAIRS: tuple[tuple[str, str], ...] = (
+    ("on-surface", "background"),
     ("on-surface", "surface"),
     ("on-surface", "surface-container"),
     ("on-surface", "surface-container-high"),
+    ("on-surface-variant", "background"),
     ("on-surface-variant", "surface"),
     ("on-surface-variant", "surface-container"),
     ("on-surface-variant", "surface-container-high"),
@@ -78,3 +82,7 @@ TEXT_PAIRS: tuple[tuple[str, str], ...] = (
     ("error", "surface"),
     ("on-error-container", "error-container"),
 )
+
+# Colours that carry no text: a contrast ratio says nothing about them, but they still have to be
+# declared, so that the audit above cannot be dodged by calling a text colour decorative.
+DECORATIVE_COLORS: tuple[str, ...] = ("outline-variant",)

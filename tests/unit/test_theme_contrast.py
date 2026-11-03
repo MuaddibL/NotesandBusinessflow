@@ -4,11 +4,15 @@ The tokens are fixed values, so the ratio is computed rather than screenshotted 
 repeatable, and it catches a palette change by itself (plan 0002, G8).
 """
 
+import re
+
 import pytest
 
-from app.ui.tokens import COLORS, TEXT_PAIRS
+from app.ui.theme import stylesheet
+from app.ui.tokens import COLORS, DECORATIVE_COLORS, TEXT_PAIRS
 
 MINIMUM_RATIO = 4.5
+HEX_COLOR = re.compile(r"#[0-9a-fA-F]{6}")
 
 
 def _linearize(channel: int) -> float:
@@ -33,6 +37,21 @@ def test_every_text_surface_pair_meets_wcag_aa(foreground: str, background: str)
     ratio = contrast_ratio(COLORS[foreground], COLORS[background])
 
     assert ratio >= MINIMUM_RATIO, f"{foreground} on {background} is only {ratio:.2f}:1"
+
+
+def test_every_colour_the_stylesheet_draws_is_audited() -> None:
+    """Otherwise the audit is a list someone has to remember to update, and silently drifts.
+
+    Compared by value, not by token name: two tokens may share a hex today, and contrast is a
+    property of the value either way.
+    """
+    audited = {COLORS[token] for pair in TEXT_PAIRS for token in pair}
+    audited |= {COLORS[token] for token in DECORATIVE_COLORS}
+
+    drawn = set(HEX_COLOR.findall(stylesheet()))
+
+    unaudited = sorted(drawn - audited)
+    assert not unaudited, f"colour(s) drawn but never checked: {unaudited}"
 
 
 def test_the_formula_matches_known_values() -> None:
