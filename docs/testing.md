@@ -33,7 +33,8 @@
 - Silme ve arşiv geçişleri: `active → archived → trashed`, geri alma, ve kalıcı silmenin onay
   gerektirmesi (BR-3, BR-4).
 - Hata yolu: `DomainError` kullanıcıya Türkçe gösterilir; stack trace, SQL, dosya yolu ve kullanıcı
-  içeriği ne arayüze ne loga sızar (`docs/security.md`).
+  içeriği **arayüze** sızmaz. Loga yalnızca ID, olay adı, korelasyon ID'si ve beklenmeyen hataların
+  yığın izi girer (`docs/security.md`, Veri ve gizlilik — yığın izi istisnası).
 - Kritik akış ui testi: görev oluştur → odak oturumu başlat → nota bağla → gün sonunda devret.
 
 ## Protected-tests rule
