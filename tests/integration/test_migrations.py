@@ -9,7 +9,10 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
+
 from app.shared.db import Migration, backup_path, migrate, open_database, schema_version
+from app.shared.errors import SchemaTooNewError, StorageError
 
 
 def _create_people(connection: sqlite3.Connection) -> None:
@@ -99,6 +102,21 @@ def test_backup_name_carries_source_version_and_date(db_path: Path) -> None:
     expected = backup_path(db_path, 1, moment)
     assert expected.name == f"{db_path.name}.v1.2026-11-03.bak"
     assert expected.exists()
+
+
+def test_a_file_from_a_newer_version_is_refused_and_left_alone(db_path: Path) -> None:
+    """A file ahead of this build is a mismatch, and the user is told that, not "maybe corrupt"."""
+    connection = open_database(db_path, migrations=VERSION_2)
+    try:
+        with pytest.raises(SchemaTooNewError) as caught:
+            migrate(connection, db_path, migrations=VERSION_1)
+
+        assert schema_version(connection) == 2, "a refusal must not move the file backwards"
+    finally:
+        connection.close()
+
+    assert caught.value.detail != StorageError.detail, "not the generic 'maybe corrupt' text"
+    assert list(db_path.parent.glob("*.bak")) == [], "nothing migrated, so nothing to back up"
 
 
 def test_creating_a_new_file_takes_no_backup(db_path: Path) -> None:

@@ -12,7 +12,7 @@ from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from app.shared.errors import StorageError
+from app.shared.errors import SchemaTooNewError, StorageError
 
 Migration = Callable[[sqlite3.Connection], None]
 
@@ -57,9 +57,9 @@ def migrate(
     if current == target:
         return current
     if current > target:
-        raise StorageError(
-            "Veri dosyası, bu sürümün tanıdığından daha yeni bir şema sürümü taşıyor."
-        )
+        # The dialog reads the class attributes, never Exception.args, so the reason has to be
+        # the type rather than a message (review 0002/F-7).
+        raise SchemaTooNewError
     if current > 0:
         shutil.copy2(path, backup_path(path, current, now or datetime.now(UTC)))
     for index in range(current, target):

@@ -28,3 +28,18 @@ class StorageError(AppError):
     code = "storage_unavailable"
     title = "Veri dosyası açılamadı"
     detail = "Uygulama verisi açılamadı. Dosya bozuk olabilir veya yazma izni olmayabilir."
+
+
+class SchemaTooNewError(StorageError):
+    """The file comes from a newer version of the application: a mismatch, not a corruption.
+
+    Its own text because the generic one sends the user looking for a broken file or a
+    permission problem, when the fix is to open it with the newer version.
+    """
+
+    code = "schema_too_new"
+    title = "Veri dosyası bu sürümden yeni"
+    detail = (
+        "Uygulama verisi, bu sürümün tanıdığından daha yeni bir şema sürümü taşıyor. "
+        "Dosyayı uygulamanın güncel sürümüyle açın."
+    )
