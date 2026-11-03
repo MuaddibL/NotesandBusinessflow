@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0002-plan.md`
 - Change set: `git diff main..HEAD` (`feature/0002-desktop-shell`, `0581f1c..3d1d848`; 48 dosya, +2170/-1106)
 - Reviewed by / on: bağımsız salt-okunur reviewer oturumu, 2026-11-03
-- Status: Fix round #2 in progress (2026-11-03) — re-review done, triaged, no third review round
+- Status: Fixes complete (2026-11-03) — `Next: VERIFY`
 
 Bu dosya bir plan değildir (`scripts/doctor` yalnızca `NNNN-plan.md` dosyalarını okur). REVIEW
 segmentinin handoff'u olarak durur; VERIFY ve PR açıklaması buradan beslenir.
@@ -421,4 +421,28 @@ Sonuç ikiye ayrılıyor:
 
 F-R1'in asıl sonucu bu düzeltmeyle ayakta kalıyor: odak görünürlüğü **ölçülebilir**, dolayısıyla
 test edilebilirdi ve edilmemişti.
+
+## Fix round #2 — ne yapıldı
+
+| # | Commit | Ne değişti |
+|---|---|---|
+| F-R1 | `6e3b9fd` | Odak görünürlüğü testi (odakla → odağı al → geri ver, üç render). Yanlış cümle iki dosyada düzeltildi. **Yan ürün:** `_pixels` yardımcısı serbest bırakılmış bellek okuyordu, test flaky'di; görüntü yerelde tutuldu, 5 ardışık yeşil (R-03). |
+| F-R2 | `4181c2d` | Veritabanından sonraki açılış adımları tek bir koruma altında: bağlantı kapatılır, korelasyon kimlikli kutu gösterilir, 1 dönülür. |
+| F-R3 | `3df8f0d` | Kriter↔test haritası yenilendi; her ad diskteki test fonksiyonlarıyla karşılaştırıldı. |
+| F-R4 | `eb75199` | `docs/testing.md` yığın izi muafiyetiyle hizalandı. |
+| F-R5 | `203a72d` | Plan dosya listesi `git diff --name-only` ile dosya dosya kapatıldı. |
+| F-R6 | `b6d0e8a` | `tokens.py` yorumu kanıtlanana indirildi (karşı örnek sayısıyla birlikte). |
+| F-R7 | `feecbef` | `argv if argv is not None else sys.argv`. |
+
+**Noise — gerekçeler:**
+
+- **F-R8** (açık transaction'lı bağlantıda `migrate()` patlar): üretim yolunda erişilemez.
+  `open_database`, `migrate`'ten önce yalnızca `connect` ve iki `PRAGMA` çalıştırıyor; ikisi de
+  implicit transaction açmıyor. Savunmacı `if connection.in_transaction: connection.commit()`
+  eklemek, çağıranın niyetini bilmeden sessizce veri yazmak olurdu — bugün olmayan bir sorun
+  için gerçek bir risk. Repository katmanı geldiğinde yeniden bakılacak.
+- **F-R9** (`main()` paylaşılan QApplication'ın stylesheet'ini değiştiriyor): gözlemlenebilir bir
+  kırılma yok; `-m ui` 5 ardışık koşumda ve rastgele sırada yeşil. Testin gerçek kullanıcı
+  dizinine yazma riski zaten yok, çünkü `open_database` daha önce başarısız oluyor ve F-R2'den
+  sonra o yol da korumalı. Test altyapısını gerçek olmayan bir sorun için karmaşıklaştırmıyoruz.
 
