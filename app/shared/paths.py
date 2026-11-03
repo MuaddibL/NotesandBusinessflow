@@ -5,6 +5,7 @@ from pathlib import Path
 
 APP_DIR_NAME = "Notes-MJ"
 DATABASE_FILE_NAME = "notes-mj.sqlite3"
+LOG_FILE_NAME = "notes-mj.log"
 
 
 def data_dir(env: Mapping[str, str], home: Path) -> Path:
@@ -24,3 +25,8 @@ def data_dir(env: Mapping[str, str], home: Path) -> Path:
 
 def database_path(env: Mapping[str, str], home: Path) -> Path:
     return data_dir(env, home) / DATABASE_FILE_NAME
+
+
+def log_path(env: Mapping[str, str], home: Path) -> Path:
+    """Next to the data file: the user owns both, and neither leaves the machine."""
+    return data_dir(env, home) / LOG_FILE_NAME
