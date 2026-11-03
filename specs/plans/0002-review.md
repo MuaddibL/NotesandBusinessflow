@@ -446,3 +446,43 @@ test edilebilirdi ve edilmemişti.
   dizinine yazma riski zaten yok, çünkü `open_database` daha önce başarısız oluyor ve F-R2'den
   sonra o yol da korumalı. Test altyapısını gerçek olmayan bir sorun için karmaşıklaştırmıyoruz.
 
+
+---
+
+# VERIFY (2026-11-03)
+
+Bağımsız QA oturumu. Full check yeşil; PB-1 kendi sayımıyla doğrulandı (o anki hâl 45 + 16 = 61);
+R-03 için 5 ardışık yeşil; depo dışında 49 mutasyon denendi, geçerli 47'nin 41'i testleri
+kırmızıya çevirdi, 6'sı hayatta kaldı ve 3 boşluğa indi. 9 ekran görüntüsü depo dışında alındı.
+
+## Triage — VERIFY
+
+Triage: MuaddibL, 2026-11-03, "A" seçeneği: V-1 ile ucuz kalemler düzeltilir, sonra ship.
+
+| # | Severity | Konu | Triage | Commit |
+|---|---|---|---|---|
+| V-1 | MEDIUM | CB-3'ün konum ayağı kanıtsız; `data_dir()` → `Path(".")` mutasyonu 61 testi yeşil bırakıyordu | **real** | `1542907` |
+| V-6 | MEDIUM | PB-3 gözlemi bu makinede kırmızı (hayatta kalanların hepsi OS süreci) | **real** — kanıtı CI residue job'ı; merge ona bağlı | — |
+| V-2 | MEDIUM-LOW | Sidebar render testi tema regresyonunu yakalamıyor | **real** | `a1e6f12` |
+| V-3 | LOW | CB-5'in "yalnızca ilerletilen dosya yedeklenir" ayağı testsiz | **real** | `4bf8343` |
+| V-4 | LOW | `test_closing_window_leaves_nothing_running` adı iddiasını karşılamıyor | **real** | `dee9667` |
+| V-5 | LOW | Tab ile gezinme kanıtsız; `focusPolicy` uygulama detayı | **real** | `c42b393` |
+| V-7 | INFO | Ağ kanıtı statik, geçişli bağımlılıkları görmüyor | **kayıt** — aksiyon yok | — |
+
+**V-2 notu.** QA'nın gözlemi doğrulandı: `::item:selected` kuralı çıkarılınca test yeşil kalıyor.
+Ama o mutasyonda kabul kriteri **yine karşılanıyor** — geçerli bölüm hâlâ görünür, çünkü
+görünürlüğü Qt'nin kendi çizimi sağlıyor. Testin korumadığı şey kriter değil, temanın katkısı;
+o da PR'daki ekran görüntüleriyle karara bağlanıyor. Bu yüzden test güçlendirilmedi, kapsamı
+docstring'e yazıldı.
+
+**V-6 notu.** Betik iki profilde de `RESIDUE FOUND` veriyor; raporlanan hayatta kalanlar
+`backgroundTaskHost.exe`, `svchost.exe`, `SearchProtocolHost.exe`, `SearchFilterHost.exe`,
+`WmiApSrv.exe` — sonuncusunu residue'nun kendi WMI ölçümü başlatıyor. Check'e ait tek bir
+python/uv/pytest/Qt süreci yok; testler başarısızken de kalıntı yok (6 → 6).
+`docs/testing.md` Resource hygiene rule 2 zaten boşta makine şart koşuyor. Karar: PB-3 CI'daki
+residue job'ının yeşil çıktısıyla kapatılır, **merge o job yeşil olmadan yapılmaz**.
+
+## Bulgu sayımı (üç tur)
+
+27 bulgu: **22 real ve düzeltildi**, 3 noise ve gerekçesi yazıldı (F-11, F-R8, F-R9), 1'inin
+kanıtı CI'da (V-6), 1'i kayıt (V-7).

@@ -102,8 +102,9 @@ odaklanan öğe görsel olarak bellidir.
 ## Definition of Done
 - [x] `scripts/check` green — `CHECK GREEN (full, 6 steps, 8 s)`, 53 + 17 = 70 test (2026-11-03)
 - [x] Independent review done; real findings fixed, noise rejected with written rationale —
-  iki review turu + VERIFY, hepsi `specs/plans/0002-review.md`'de; 20 bulgunun 16'sı real ve
-  düzeltildi, 4'ü noise ve gerekçesi yazıldı
+  iki review turu + VERIFY, hepsi `specs/plans/0002-review.md`'de. 27 bulgu: 22'si real ve
+  düzeltildi, 3'ü noise ve gerekçesi yazıldı (F-11, F-R8, F-R9), 1'inin kanıtı CI'da (V-6),
+  1'i kayıt (V-7)
 - [x] Criterion ↔ evidence table complete for CB-* **and** PB-* — `specs/plans/0002-plan.md`,
   Criterion ↔ test map (43 referansın 43'ü diskte doğrulandı); ekran görüntüleri PR'da.
   **PB-3'ün kanıtı CI'daki residue job'ıdır** — merge, o job yeşil olmadan yapılmaz (V-6)
