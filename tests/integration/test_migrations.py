@@ -159,3 +159,21 @@ def test_creating_a_new_file_takes_no_backup(db_path: Path) -> None:
     connection.close()
 
     assert list(db_path.parent.glob("*.bak")) == []
+
+
+def test_an_up_to_date_file_takes_no_backup_either(db_path: Path) -> None:
+    """CB-5 backs up a file that is being *upgraded*, not one that is opened (review 0002/V-3).
+
+    Without this, losing the early return in migrate() would leave a new .bak beside the user's
+    data on every single start, and backup cleanup is out of scope for this spec.
+    """
+    open_database(db_path, migrations=VERSION_2).close()
+
+    for _ in range(3):
+        connection = open_database(db_path, migrations=VERSION_2)
+        try:
+            assert schema_version(connection) == 2
+        finally:
+            connection.close()
+
+    assert list(db_path.parent.glob("*.bak")) == []
