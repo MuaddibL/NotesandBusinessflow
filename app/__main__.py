@@ -1,10 +1,16 @@
-"""Starts the application locally: ``uv run python -m app`` (README)."""
+"""Starts the application locally: ``uv run python -m app`` (README).
+
+The paths and the way a box reaches the user are parameters with real defaults, so the startup
+path itself can be tested instead of only the pieces it assembles (tests/ui/test_entry_point.py).
+"""
 
 import os
 import sys
+from collections.abc import Callable
 from pathlib import Path
+from types import TracebackType
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 from app.shared.db import open_database
 from app.shared.errors import StorageError
@@ -14,27 +20,50 @@ from app.ui.error_dialog import storage_error_box, unexpected_error_box
 from app.ui.main_window import MainWindow
 from app.ui.theme import stylesheet
 
+ShowBox = Callable[[QMessageBox], None]
+ExceptHook = Callable[[type[BaseException], BaseException, TracebackType | None], None]
 
-def main() -> int:
-    app = QApplication(sys.argv)
+
+def show_modal(box: QMessageBox) -> None:
+    """How a box reaches the user; a test passes its own recorder and keeps the run headless."""
+    box.exec()
+
+
+def unexpected_error_hook(show_box: ShowBox = show_modal) -> ExceptHook:
+    """The hook ``sys.excepthook`` gets: log under an id, then show the user that same id (CB-7)."""
+
+    def hook(
+        kind: type[BaseException], error: BaseException, traceback: TracebackType | None
+    ) -> None:
+        correlation_id = report_unexpected(error)
+        show_box(unexpected_error_box(None, correlation_id))
+
+    return hook
+
+
+def main(
+    argv: list[str] | None = None,
+    *,
+    database: Path | None = None,
+    log_file: Path | None = None,
+    show_box: ShowBox = show_modal,
+) -> int:
+    # QApplication is a singleton: under pytest-qt one already exists and owns the run.
+    existing = QApplication.instance()
+    app = existing if isinstance(existing, QApplication) else QApplication(argv or sys.argv)
     app.setStyleSheet(stylesheet())
 
     try:
-        connection = open_database(database_path(os.environ, Path.home()))
+        connection = open_database(database or database_path(os.environ, Path.home()))
     except StorageError as error:
         # Starting up empty would look like a working app with no data (CB-6).
-        storage_error_box(None, error).exec()
+        show_box(storage_error_box(None, error))
         return 1
 
     # After the database, not before: opening it is what proves the data directory is there and
     # writable, and a failure to open has its own screen rather than a correlation id (CB-6).
-    configure_logging(log_path(os.environ, Path.home()))
-
-    def _excepthook(kind: type[BaseException], error: BaseException, traceback: object) -> None:
-        correlation_id = report_unexpected(error)
-        unexpected_error_box(None, correlation_id).exec()
-
-    sys.excepthook = _excepthook
+    configure_logging(log_file or log_path(os.environ, Path.home()))
+    sys.excepthook = unexpected_error_hook(show_box)
 
     window = MainWindow(on_close=connection.close)
     window.show()
