@@ -1,7 +1,13 @@
-# Polsan Leave Manager
+# Notes&MJ
 
-Polsan çalışanlarının izin talebi oluşturduğu, yöneticilerin onayladığı ve İK'nın izin
-bakiyelerini yönettiği web uygulaması. Mimari ve kurallar: [`AGENTS.md`](AGENTS.md) ve `docs/`.
+Tek kişilik, tamamen yerel bir masaüstü çalışma alanı: günlük iş planlama (zaman blokları,
+Eisenhower), odak modu (Pomodoro) ve not alma — üçü birbirine bağlı. `MJ` = *My Job*.
+Veri makineden çıkmaz: sunucu, hesap ve ağ erişimi yoktur.
+Mimari ve kurallar: [`AGENTS.md`](AGENTS.md) ve `docs/`.
+
+> **Durum.** Masaüstü kabuğu hazır (spec 0002): pencere açılır, yerel veri dosyası oluşur ve
+> şeması sürümlenir. Ürün özellikleri — görevler, odak oturumları, notlar — henüz yok; her biri
+> kendi spec'iyle gelecek.
 
 ## Çalıştırma
 
@@ -9,17 +15,25 @@ Gereksinim: [uv](https://docs.astral.sh/uv/) (Python 3.12'yi kendisi kurar).
 
 ```sh
 uv sync                                   # bağımlılıkları uv.lock'tan kurar
-uv run python -m app                      # http://127.0.0.1:8000 — yalnızca bu makineden erişilir
+uv run python -m app                      # Notes&MJ penceresini açar
 ```
 
-Port/host: `PLM_PORT` ve `PLM_HOST` ortam değişkenleri (varsayılan `8000` ve `127.0.0.1`).
+Veri dosyası: `%LOCALAPPDATA%\Notes-MJ\notes-mj.sqlite3` (bkz. `docs/security.md`).
 
 ## Doğrulama
 
 ```sh
-uv run playwright install chromium        # bir kerelik: e2e testleri için tarayıcı
-./scripts/check                           # tek doğrulama komutu (--fast: e2e hariç)
+./scripts/check                           # tek doğrulama komutu (--fast: arayüz testleri hariç)
+./scripts/doctor                          # çalışma alanı sağlığı
+./scripts/residue                         # kaynak hijyeni (boşta bir makinede çalıştırın)
 ```
+
+Arayüz testleri pencere açmaz (`QT_QPA_PLATFORM=offscreen`); Linux'ta Qt'nin `libEGL`, `libGL` ve
+`libxkbcommon-x11` kütüphaneleri gerekir (CI bunları kurar).
+
+## Arayüz tasarımı
+
+Görsel kaynak ve tasarım–ürün farkları: [`docs/design/`](docs/design/README.md).
 
 ---
 

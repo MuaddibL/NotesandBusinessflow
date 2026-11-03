@@ -2,44 +2,55 @@
 
 Kodda İngilizce karşılık kullanılır; konuşma, spec ve UI'da Türkçe terim. Aynı kelime = aynı anlam.
 
+Ürün adı **Notes&MJ**; `MJ` = *My Job*. Kod ve dosya adlarında `notes-mj` / `notes_mj` yazılır
+(`&` paket ve dosya adlarında geçerli değildir).
+
 ## Ubiquitous language
 
 | Term | Meaning | Notes / not to be confused with |
 |---|---|---|
-| Çalışan (`Employee`) | Sistemde izin hakkı olan kişi | Kullanıcı hesabı (`User`, Identity) ile aynı şey değil; bir Çalışan'ın bir hesabı olur |
-| Yönetici (`Manager`) | Bir Çalışan'ın **doğrudan** onaylayıcısı | Rol olarak Manager; dolaylı üstler onaylayıcı değildir |
-| İK (`HR`) | Bakiyeleri, çalışanları ve tatilleri yöneten rol | Talep onaylayıcısı değildir (MVP) |
-| İzin Türü (`LeaveType`) | Yıllık, Mazeret, Hastalık/Rapor, Ücretsiz | Yalnızca Yıllık izin bakiyeden düşer |
-| İzin Talebi (`LeaveRequest`) | Bir Çalışan'ın belirli tarih aralığı için izin isteği | Durum: Beklemede → Onaylandı / Reddedildi / İptal Edildi |
-| Beklemede (`Pending`) | Oluşturulmuş, karar bekleyen talep | Aktif talep sayılır |
-| Onaylandı (`Approved`) | Yönetici onayı almış talep | Aktif talep sayılır; Yıllık izinde bakiyeden düşer |
-| Reddedildi (`Rejected`) | Yönetici tarafından reddedilmiş talep | Son durum; bakiyeyi etkilemez |
-| İptal Edildi (`Cancelled`) | Çalışan tarafından geri çekilmiş talep | Son durum; onaylıysa bakiye iade edilir |
-| İzin Bakiyesi (`LeaveBalance`) | Çalışan + yıl için hak / kullanılan / kalan | Kalan eksi olabilir (BR-3) |
-| Hak Ediş (`Accrual`) | Bir yıl için tanımlanan yıllık izin hakkı | Kıdeme ve yaşa göre (BR-1) |
-| Mahsup (`Offset`) | Eksi bakiyenin bir sonraki yılın hakkından düşülmesi | BR-3 |
-| Resmi Tatil (`PublicHoliday`) | İK'nın tanımladığı, iş günü sayılmayan tarih | Yarım gün tatil (arife) İK tanımına bağlı — açık karar |
-| İş Günü (`WorkingDay`) | Hafta sonu ve Resmi Tatil olmayan gün | İzin süresi iş günüyle ölçülür (BR-2) |
-| Birim (`LeaveUnit`) | İzin miktarı birimi: 1 = tam gün, 0,5 = yarım gün | `Decimal`, asla float |
+| Görev (`Task`) | Yapılacak tek iş kalemi | Zaman Bloğu ile aynı şey değil: görev *ne*, blok *ne zaman* |
+| Gün Planı (`DayPlan`) | Belirli bir takvim gününün görevleri ve zaman blokları | Takvim günü yerel saate göre belirlenir |
+| Zaman Bloğu (`TimeBlock`) | Gün içinde başlangıç–bitiş saati olan planlanmış aralık | Mola da bir bloktur; bir Göreve bağlanabilir ama şart değil |
+| Odak Oturumu (`FocusSession`) | Bir Görev üzerinde geçirilen, zamanlanmış kesintisiz çalışma | Zaman Bloğu plandır, Odak Oturumu gerçekleşendir |
+| Pomodoro Döngüsü (`PomodoroCycle`) | Çalışma + mola tekrarlarından oluşan dizi (ör. 4 seans) | Odak Oturumu'nun bir biçimi; tek biçimi değil |
+| Not (`Note`) | Serbest metin kaydı | Tek başına var olabilir (BR-2) |
+| Proje (`Project`) | Görevleri gruplayan uzun ömürlü iş başlığı | Etiket değildir: bir Görev en fazla bir Projeye aittir |
+| Etiket (`Tag`) | Görev ve Notları kesen serbest sınıflandırma | Çoktan çoğa; Proje ile karıştırılmaz |
+| Eisenhower Çeyreği (`EisenhowerQuadrant`) | Acil/Önemli ekseninde dört çeyrek: Yap, Planla, Devret, Ele | Öncelik alanıdır, durum değil |
+| Günün 3 Büyük Odağı (`TopThree`) | Gün için seçilen en fazla üç öncelikli Görev | Gün Planı'nın tamamı değil (BR-7) |
+| Devir (`RollOver`) | Tamamlanmamış Görev'in ertesi günün planına aktarılması | Kopyalama değil: aynı Görev taşınır, sayacı artar (BR-1) |
+| Devir Sayısı (`rollover_count`) | Bir Görev'in kaç kez devrettiği | Sürüncemede kalan işin görünür sinyali |
+| Aktif (`Active`) | Öğenin normal, listelerde görünen durumu | |
+| Arşivlendi (`Archived`) | Tamamlanmış ama saklanan öğe | Silme değildir (BR-4) |
+| Çöpte (`Trashed`) | Silinmiş ama geri alınabilir öğe | Kalıcı silme ayrı ve açık bir eylemdir (BR-3) |
+| Bilişsel Yük (`CognitiveLoad`) | Günün planlanan yoğunluğunun özeti | Türetilmiş gösterge; saklanan veri değil |
 
 ## Business rules
-- **BR-1:** Yıllık izin hakkı 4857 s. İş Kanunu md. 53'e göre kıdeme bağlıdır: 1–5 yıl (5 dahil
-  değil) 14 gün, 5–15 yıl (15 dahil değil) 20 gün, 15 yıl ve üzeri 26 gün. 18 yaşında ve altında
-  veya 50 yaşında ve üzerinde olan Çalışan'a en az 20 gün verilir.
-- **BR-2:** İzin süresi iş günü olarak hesaplanır; hafta sonu ve Resmi Tatiller süreden düşülmez
-  (sayılmaz).
-- **BR-3:** Yıllık izin talebi bakiyeyi aşabilir; bakiye eksiye düşer ve eksi bakiye bir sonraki
-  yılın Hak Ediş'inden mahsup edilir. Talep ekranında ve onay ekranında aşım miktarı açıkça uyarı
-  olarak gösterilir. Eksi bakiye için üst sınır yoktur.
-- **BR-4:** Aynı Çalışan'ın tarih aralıkları çakışan iki aktif (Beklemede veya Onaylandı) talebi
-  olamaz.
-- **BR-5:** Bir Çalışan kendi talebini onaylayamaz veya reddedemez.
-- **BR-6:** Onaylanmış talep yalnızca başlangıç tarihinden önce iptal edilebilir; iptal, düşülen
-  bakiyeyi iade eder.
-- **BR-7:** Yarım gün izin desteklenir (0,5 Birim).
+- **BR-1:** Gün sonunda tamamlanmamış Görev, ertesi günün planına **devreder**; Görev'in Devir
+  Sayısı bir artar ve arayüzde görünür. Devir sessiz değildir — devreden görev işaretlidir.
+- **BR-2:** Bir Not tek başına var olabilir; isteğe bağlı olarak en fazla bir Göreve ve/veya bir
+  Gün Planı'na bağlanır. Not alma hiçbir bağlantı zorunluluğuyla yavaşlatılmaz.
+- **BR-3:** Silinen öğe önce **Çöpte** durumuna geçer ve geri alınabilir. Kalıcı silme, kullanıcının
+  ayrı ve açık bir eylemidir; onay ister.
+- **BR-4:** Arşivleme silme değildir: Arşivlenen öğe varsayılan listelerde görünmez, aramada ve
+  arşiv ekranında bulunur, geri alınabilir.
+- **BR-5:** Bir Odak Oturumu en fazla bir Göreve bağlıdır ve aynı anda yalnızca bir Odak Oturumu
+  etkin olabilir. Yeni oturum başlatmak, etkin oturumu bitirir (kullanıcıya sorulur).
+- **BR-6:** Aynı Gün Planı içindeki Zaman Blokları çakışamaz.
+- **BR-7:** Günün 3 Büyük Odağı en fazla üç Görev içerir; dördüncüsü eklenemez.
+- **BR-8:** Etiket adı büyük/küçük harf duyarsız benzersizdir (`#UX` ile `#ux` aynı Etiket'tir).
 
 ## Key domain invariants
-- Talepler ve bakiye hareketleri silinmez; değişiklik durum geçişi + audit kaydıyla olur.
-- Son durumdaki (Reddedildi, İptal Edildi) bir talep tekrar değişmez.
-- Bir Çalışan'ın bir yıl için tek bir İzin Bakiyesi vardır; kalan = hak − kullanılan − mahsup.
-- Hastalık izninde tanı/teşhis bilgisi saklanmaz (bkz. `docs/security.md`).
+- **Veri makineden çıkmaz.** Hiçbir kayıt ağa gönderilmez, hiçbir dış servise yazılmaz
+  (`docs/security.md`).
+- Kayıtlar yok edilmez: durum **Aktif → Arşivlendi → Çöpte** üzerinden ilerler; tek istisna
+  kullanıcının açık kalıcı silme eylemidir (BR-3).
+- Takvim günü ve blok saatleri **yerel saat** esaslıdır; oluşturma/değiştirme damgaları UTC
+  (`docs/conventions.md`, Data rules).
+- Bir Görev en fazla bir Projeye aittir; Etiket sayısı sınırsızdır.
+- Odak Oturumu geçmişi değiştirilemez: biten bir oturumun süresi sonradan düzenlenmez.
+
+## Deliberately out of scope
+Senkronizasyon ve çoklu cihaz, paylaşım ve ekip görünümleri, dış takvim/e-posta entegrasyonları —
+gerekçe ve kapsam dışı listesinin tamamı: `docs/architecture.md`.

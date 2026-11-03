@@ -10,48 +10,69 @@ Buradaki her kural ya araçla zorlanır (tercih edilen) ya da review'da kontrol 
 - Always English (protocol, not prose): ANEW core files, template headings and field labels,
   `Status:` values (Draft / Approved / In progress / Shipped), `Approved by / on:`, `Source:`.
 - Code identifiers, branch names, commit messages: English (domain sözlüğündeki İngilizce
-  karşılıklarla). Kullanıcıya görünen metinler (UI, hata `title`/`detail`) Türkçe.
+  karşılıklarla). Kullanıcıya görünen metinler (UI, hata başlık/açıklamaları) Türkçe.
 - Agent messages (handoff summaries, refusals, `Next:` lines): chat language; command names, file
   paths and protocol fields verbatim.
 
 ## Language & framework versions
 - Python 3.12 (`.python-version`, `requires-python = ">=3.12,<3.13"`), ortam ve kilit: **uv**
   (`uv.lock` commit edilir; check `--frozen` çalışır).
-- FastAPI, SQLAlchemy 2.x, Alembic, Pydantic v2 — ilk feature planında eklenir, `uv.lock` ile sabit.
-- Frontend: vanilla HTML/CSS/JavaScript (ES2022 modülleri), build aracı ve npm yok.
-- Veritabanı: SQLite (dosya; testlerde test başına geçici dosya).
+- Arayüz: **PySide6** (Qt Widgets + QSS). Qt Quick/QML kullanılmaz — tek bir arayüz teknolojisi.
+- Veri: stdlib **`sqlite3`**, tek dosya. ORM yoktur (`docs/architecture.md`, yasak 5).
+- Paketleme: PyInstaller, tek Windows çalıştırılabiliri. npm ve build adımı yoktur.
 
 ## Naming
 - Python: PEP 8 — modül/fonksiyon/değişken `snake_case`, sınıf `PascalCase`, sabit `UPPER_CASE`.
-- Domain tipleri sözlükteki adlarla: `LeaveRequest`, `LeaveBalance`, `PublicHoliday`...
-- Hata sınıfları `<Neden>Error` (`OverlappingRequestError`), hepsi `DomainError` alt sınıfı.
+- Domain tipleri sözlükteki İngilizce adlarla: `Task`, `DayPlan`, `TimeBlock`, `FocusSession`,
+  `Note`, `Project`, `Tag`.
+- Hata sınıfları `<Neden>Error` (`OverlappingTimeBlockError`), hepsi `DomainError` alt sınıfı.
+- Qt widget alanları: testlerin okuduğu widget'lar öneksiz (`self.sections`), yalnızca içeride
+  kalanlar `_` önekli; sinyal slotları `_on_<nesne>_<olay>`. (Kural 2026-11-03'te daraltıldı:
+  `_` ile gizlenen bir alana testten erişmek Python'da çelişkidir — review 0002/F-9.)
 - Testler: dosya `test_<davranış>.py`, fonksiyon `test_<ne>_<koşul>_<beklenen>`; BR testinin adı
-  veya docstring'i kuralı anar (`BR-4`).
-- API yolları: `/api/<kaynak-çoğul>` kebab-case (`/api/leave-requests`), JSON alanları `snake_case`.
+  veya docstring'i kuralı anar (`BR-1`).
+- Tablo adları çoğul `snake_case` (`tasks`, `time_blocks`); sütunlar `snake_case`.
 - Branch ve commit: `docs/git.md`.
 
 ## Error handling
-- İş kuralı ihlali → `app.shared` içindeki `DomainError` alt sınıfı fırlatılır (`code` taşır).
-- Tek bir FastAPI exception handler bunu RFC 9457 `application/problem+json`'a çevirir:
-  `type`, `title` (Türkçe), `status`, `detail` (Türkçe), `code` (makine okunur, İngilizce).
-- Doğrulama hataları (Pydantic) 422 problem+json; yetki 401/403; bulunamadı 404.
-- Beklenmeyen hata → 500 + korelasyon ID; ayrıntı yalnızca loga gider. Stack trace, SQL, dosya
-  yolu ve kişisel veri kullanıcıya **asla** sızmaz.
-- Frontend hataları tek bir yardımcı (`showProblem`) gösterir.
+- İş kuralı ihlali → `app.shared` içindeki `DomainError` alt sınıfı fırlatılır (`code` taşır,
+  makine okunur ve İngilizce).
+- `sqlite3` hataları `repository` sınırında sarmalanır; `sqlite3` tipleri modül dışına sızmaz.
+- `ui` katmanı `DomainError`'ı yakalar ve kullanıcıya Türkçe başlık + açıklama gösterir; diyaloglar
+  `app/ui/error_dialog.py`'deki ortak kuruculardan gelir (`storage_error_box`,
+  `unexpected_error_box`), her yerde ayrı diyalog kurulmaz. (Ad 2026-11-03'te fiilen kullanılan
+  API ile hizalandı — review 0002/F-9.)
+- Beklenmeyen hata → korelasyon ID'li log kaydı + kullanıcıya genel mesaj. Stack trace, SQL, dosya
+  yolu ve kullanıcı içeriği kullanıcıya **asla** gösterilmez (`docs/security.md`).
+- Uygulama, veritabanı açılamadığında sessizce boş başlamaz: açık bir hata ekranı gösterir.
 
 ## Data rules
-- İzin tarihleri `datetime.date` (saat dilimi yok, takvim günü).
-- Zaman damgaları (oluşturma, karar anı) UTC, timezone-aware `datetime`; UI'da Europe/Istanbul.
-- İzin miktarı `decimal.Decimal`, 0,5 adımlı — **asla float** (DB'de Numeric/metin, float değil).
-- ID'ler UUID (v4).
-- Silme yok: talep ve bakiye hareketleri durum değişikliği + audit kaydı ile değişir.
-- Kişisel veri yalnızca sahibi modülde tutulur (doğum tarihi → Organization); loglara yazılmaz.
+- Takvim günü `datetime.date`, zaman bloğu saatleri `datetime.time` — **yerel saat**; 09:00 her
+  zaman 09:00'dır, saat dilimi değişse de geçmiş plan saatleri kaymaz (bootstrap kararı, 2026-11-02).
+- Oluşturma / değiştirme damgaları UTC, timezone-aware `datetime` (`DTZ` kuralı zorlar).
+- Süreler tam sayı **dakika** (`int`) — asla float. Sayaçlar saniye cinsinden `int`.
+- ID'ler UUID v4, veritabanında metin.
+- Silme yok: `active` → `archived` → `trashed`; kalıcı silme ayrı ve açık eylem (BR-3, BR-4).
+- Şema sürümü `PRAGMA user_version` ile yönetilir. Her geçiş ileri yönlü ve idempotent; geçişten
+  önce veritabanı dosyasının yedeği alınır. Geçiş atlanmaz, sürümler sırayla uygulanır.
+- Kullanıcı içeriği (not metni, görev başlığı, proje adı) loglara yazılmaz; loglarda yalnızca ID.
+
+## UI conventions
+- Arayüz tasarımının kaynağı: `docs/design/` (bkz. oradaki `README.md`). Renk, tipografi ve boşluk
+  değerleri tasarımdaki **Material 3 belirteç seti**dir; bunlar tek bir QSS tema dosyasına çevrilir.
+  Widget'ların içine doğrudan renk veya piksel değeri yazılmaz — her değer bir belirteçten gelir.
+- Varsayılan tema koyudur.
+- Fontlar (Inter, JetBrains Mono) ve ikonlar uygulamayla birlikte `app/resources/` içinde gömülür;
+  çalışma anında ağdan yüklenmez (`docs/architecture.md`, yasak 6).
+- `ui` ince kabuktur: iş kuralı, hesaplama ve SQL içermez (yasak 4).
+- Kullanıcıya görünen her metin Türkçe; tarih ve saat biçimi yerel.
 
 ## Enforced by tooling
 - `ruff check` — pyflakes, pycodestyle, isort, bugbear, pyupgrade, bandit (`S`), naive datetime
   yasağı (`DTZ`), simplify, ruff kuralları. `ruff format --check` — biçim.
 - `mypy --strict` — `app/` için tam tip denetimi.
 - Mimari test (`tests/architecture_rules.py`, grimp) — `docs/architecture.md` "Forbidden
-  dependencies" 1–3; `pytest` adımında koşar.
+  dependencies" 1–3 ve 5; `pytest` adımında koşar. Ağ ve ORM yasağı gerçek import grafında da
+  doğrulanır.
 - `uv lock --check` — `uv.lock` `pyproject.toml` ile tutarlı.
 - Hepsi `scripts/check` içinde (`scripts/check.conf`).

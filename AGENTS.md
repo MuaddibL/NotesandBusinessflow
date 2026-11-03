@@ -1,7 +1,8 @@
 # AGENTS.md — Project Rules
 
-**Polsan Leave Manager** — employees request leave, their direct manager approves/rejects, HR manages
-balances. Modular monolith: Python 3.12 · FastAPI · SQLAlchemy · SQLite · vanilla HTML/CSS/JS (uv).
+**Notes&MJ** (*My Job*) — tek kişilik, tamamen yerel masaüstü çalışma alanı: birbirine bağlı günlük
+iş planlama (zaman blokları, Eisenhower), odak modu (Pomodoro) ve not alma. Modüler monolit:
+Python 3.12 · PySide6 (Qt) · stdlib `sqlite3` · uv · Windows öncelikli, ağ yok.
 
 ## Operating mode
 
@@ -31,6 +32,7 @@ balances. Modular monolith: Python 3.12 · FastAPI · SQLAlchemy · SQLite · va
 | Testing rules | `docs/testing.md` |
 | Security rules | `docs/security.md` |
 | Git & branching rules | `docs/git.md` |
+| UI design reference (tasarımın kaynağı) | `docs/design/` |
 | Decisions (ADRs) · roles (who may do what) | `docs/decisions/` · `docs/roles/` |
 | Specs & plans | `specs/active/` · `specs/plans/` · shipped → `specs/done/` |
 | Processes & gates · prompts & recovery ramps | `workflows/` · `prompts/` |

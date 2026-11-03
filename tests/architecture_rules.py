@@ -1,4 +1,4 @@
-"""Module boundary rules (docs/architecture.md, Forbidden dependencies 1-3) on a grimp graph.
+"""Module boundary rules (docs/architecture.md, Forbidden dependencies 1-3 and 5) on a grimp graph.
 
 Rules are generic over ``app.modules.<name>`` so a new module is covered without configuration.
 """
@@ -7,9 +7,34 @@ from dataclasses import dataclass
 
 import grimp
 
+APP_PACKAGE = "app"
 MODULES_PACKAGE = "app.modules"
 SHARED_PACKAGE = "app.shared"
-DOMAIN_FORBIDDEN_PACKAGES = frozenset({"fastapi", "starlette", "sqlalchemy", "httpx"})
+
+# Rule 2: the domain layer is pure Python — no toolkit, no storage, no IO.
+DOMAIN_FORBIDDEN_PACKAGES = frozenset({"PySide6", "shiboken6", "sqlite3", "pathlib", "shutil"})
+
+# Rule 5: the product never reaches the network, and uses no ORM (docs/architecture.md).
+APP_FORBIDDEN_PACKAGES = frozenset(
+    {
+        "fastapi",
+        "uvicorn",
+        "starlette",
+        "requests",
+        "httpx",
+        "aiohttp",
+        "urllib",
+        "urllib3",
+        "http",
+        "socket",
+        "socketserver",
+        "ftplib",
+        "smtplib",
+        "xmlrpc",
+        "webbrowser",
+        "sqlalchemy",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -57,7 +82,7 @@ def cross_module_internal_imports(graph: grimp.ImportGraph) -> list[Violation]:
 
 
 def domain_framework_imports(graph: grimp.ImportGraph) -> list[Violation]:
-    """Rule 2: ``app.modules.*.domain`` never imports web, ORM or HTTP client packages."""
+    """Rule 2: ``app.modules.*.domain`` never imports the UI toolkit, storage or IO packages."""
     violations = []
     for importer, imported in _imports(graph):
         module = _module_of(importer)
@@ -66,6 +91,15 @@ def domain_framework_imports(graph: grimp.ImportGraph) -> list[Violation]:
         if imported.split(".")[0] in DOMAIN_FORBIDDEN_PACKAGES:
             violations.append(Violation("domain-framework", importer, imported))
     return violations
+
+
+def forbidden_app_imports(graph: grimp.ImportGraph) -> list[Violation]:
+    """Rule 5: no part of ``app`` imports the network stack or an ORM."""
+    return [
+        Violation("forbidden-package", importer, imported)
+        for importer, imported in _imports(graph)
+        if _is_within(importer, APP_PACKAGE) and imported.split(".")[0] in APP_FORBIDDEN_PACKAGES
+    ]
 
 
 def shared_imports_module(graph: grimp.ImportGraph) -> list[Violation]:
@@ -82,4 +116,5 @@ def all_violations(graph: grimp.ImportGraph) -> list[Violation]:
         cross_module_internal_imports(graph)
         + domain_framework_imports(graph)
         + shared_imports_module(graph)
+        + forbidden_app_imports(graph)
     )

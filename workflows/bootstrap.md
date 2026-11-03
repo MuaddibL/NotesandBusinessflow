@@ -29,6 +29,14 @@ LANGUAGE → INSPECT → INTERVIEW → GENERATE → VERIFY → REPORT
    `docs/git.md` "Trivial changes"), and **operating mode (lite/strict)**.
    **[GATE: human]** — your answers are the input; nothing is assumed.
 
+   **Bootstrap never deletes or rewrites product code**, not even when the interview repositions
+   the product and the existing code clearly belongs to the old one. It changes `docs/`, `specs/`
+   templates, `AGENTS.md`, `scripts/` and CI config only. Code that has to go is listed in the
+   *first spec's* plan and deleted by BUILD, under invariants 1 and 2 ("No spec, no code", "Plan
+   before build"). (Added 2026-11-03: the 2026-11-02 repositioning deleted 12 code and test files
+   in a `docs:` commit before spec 0002 existed, which took that plan step out of review's reach
+   — review 0002/F-5.)
+
 3. **GENERATE.** The agent fills `docs/*.md` from the interview, writes `scripts/check.conf`
    (build/test/lint commands for your stack), sets the Mode and Language lines in `AGENTS.md`, and rewrites
    `AGENTS.md`'s project summary — **keeping the invariant rules block verbatim**, keeping the

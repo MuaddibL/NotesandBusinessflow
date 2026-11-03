@@ -1,24 +1,14 @@
-from collections.abc import Callable
+"""Integration tests own a database file of their own: one temporary file per test."""
+
+from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
-from fastapi import FastAPI
-from fastapi.routing import APIRoute
-from fastapi.testclient import TestClient
 
-from app.main import create_app
-
-
-def add_route(app: FastAPI, path: str, endpoint: Callable[[], object]) -> None:
-    """Registers a test-only route ahead of the catch-all static mount."""
-    app.router.routes.insert(0, APIRoute(path, endpoint, methods=["GET"]))
+from app.shared.paths import DATABASE_FILE_NAME
 
 
 @pytest.fixture
-def app() -> FastAPI:
-    return create_app()
-
-
-@pytest.fixture
-def client(app: FastAPI) -> TestClient:
-    # follow_redirects=False: a redirect is a response under test, never silently followed.
-    return TestClient(app, raise_server_exceptions=False, follow_redirects=False)
+def db_path(tmp_path: Path) -> Iterator[Path]:
+    # Under a subdirectory that does not exist yet: creating it is part of what CB-3 promises.
+    yield tmp_path / "data" / DATABASE_FILE_NAME

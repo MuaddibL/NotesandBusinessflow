@@ -7,29 +7,35 @@
 
 ## Frameworks & layout
 - **pytest** (`uv run --frozen pytest`), ayarlar `pyproject.toml` `[tool.pytest.ini_options]`.
-- `tests/unit/` — domain kuralları; saf Python, DB/HTTP/saat yok ("bugün" parametre).
-- `tests/integration/` — FastAPI `TestClient` + **test başına geçici SQLite dosyası**; API,
-  yetki, problem+json yanıtları, transaction davranışı.
-- `tests/e2e/` — **Playwright for Python** (`pytest-playwright`), headless Chromium, tek worker,
-  `@pytest.mark.e2e` ile işaretli. Test edilen uygulamanın (uvicorn, rastgele port, geçici SQLite)
-  **tek sahibi bir pytest session fixture'ıdır**: başlatır, hazır olmasını bekler, teardown'da
-  durdurur — hata ve timeout durumunda da (`try/finally`, süreç `terminate` → `wait` → `kill`).
-- `tests/e2e/` altındaki her test, conftest tarafından otomatik `e2e` işaretlenir — işaret
-  unutulsa da fast'e kaçamaz.
-- Tarayıcı bir kerelik kurulur (ağ gerekir, check içinde değil):
-  `uv run playwright install chromium`; CI'da `--with-deps` ile.
-- Profil ayrımı seçiciyle: `--fast` → `pytest -m "not e2e"`, full → ek olarak `pytest -m e2e`.
+- `tests/unit/` — domain kuralları; saf Python, DB/Qt/saat yok ("bugün" ve "şu an" parametre).
+- `tests/integration/` — service + repository, **test başına geçici SQLite dosyası**; transaction
+  davranışı ve şema geçişleri (`PRAGMA user_version`).
+- `tests/ui/` — **pytest-qt** (`qtbot`), `QT_QPA_PLATFORM=offscreen` ile pencere açılmadan,
+  `@pytest.mark.ui` ile işaretli. Kabuk ince olduğu için (`docs/architecture.md`, yasak 4) bu
+  testler **azdır ve kalabalıklaşmamalıdır**: görünüm montajı, sinyal–slot bağları, hata gösterimi
+  ve kritik akışın uçtan uca çalıştığı. İş kuralı buradan değil, `tests/unit/` üzerinden kanıtlanır.
+- `QApplication` yaşam döngüsünün tek sahibi pytest-qt'dir; test sonunda açık pencere, zamanlayıcı
+  veya olay döngüsü bırakılmaz (Resource hygiene).
+- `tests/ui/` altındaki her test, conftest tarafından otomatik `ui` işaretlenir — işaret unutulsa
+  da fast'e kaçamaz.
+- Profil ayrımı seçiciyle: `--fast` → `pytest -m "not ui"`, full → ek olarak `pytest -m ui`.
 - Adlandırma: `test_<davranış>.py`, `test_<ne>_<koşul>_<beklenen>` (`docs/conventions.md`).
 - Coverage yüzdesi kapısı **yok**; güvence kabul kriteri ↔ test haritasından gelir.
 
 ## What must be tested
-- Her iş kuralı **BR-n** en az bir birim testle (sınır değerleriyle: BR-1 kıdem 5/15 yıl ve yaş
-  18/50 eşikleri, BR-2 tatil/hafta sonu, BR-7 yarım gün).
+- Her iş kuralı **BR-n** en az bir birim testle, sınır değerleriyle: BR-1 devir sayacı ve gün
+  sınırı, BR-5 tek etkin oturum, BR-6 blok çakışması (bitişik vs. örtüşen), BR-7 üçüncü/dördüncü
+  odak, BR-8 büyük/küçük harf.
 - Her yasak bağımlılık mimari testle (`tests/architecture_rules.py`; `docs/architecture.md`).
-- Yetki: her rol için "görebilir / göremez" integration testi; varsayılan RED testi (yetki
-  bildirmeyen route yok).
-- Hata yanıtları: problem+json biçimi, iç ayrıntı sızmıyor.
-- Kritik akış e2e: talep oluştur → yönetici onaylar → bakiye düşer (BR-3 aşım uyarısı dahil).
+  **Ağ yasağı da testtir**: ürün kodunda ağ paketi importu bulunmadığı import grafından doğrulanır.
+- **Şema geçişi**: eski `user_version`'lı bir veritabanından yenisine geçişte veri korunur; geçiş
+  idempotenttir (iki kez çalıştırmak bozmaz).
+- Silme ve arşiv geçişleri: `active → archived → trashed`, geri alma, ve kalıcı silmenin onay
+  gerektirmesi (BR-3, BR-4).
+- Hata yolu: `DomainError` kullanıcıya Türkçe gösterilir; stack trace, SQL, dosya yolu ve kullanıcı
+  içeriği **arayüze** sızmaz. Loga yalnızca ID, olay adı, korelasyon ID'si ve beklenmeyen hataların
+  yığın izi girer (`docs/security.md`, Veri ve gizlilik — yığın izi istisnası).
+- Kritik akış ui testi: görev oluştur → odak oturumu başlat → nota bağla → gün sonunda devret.
 
 ## Protected-tests rule
 Weakening asserts, deleting, or skipping tests to reach green is forbidden. A red test triggers
@@ -44,7 +50,8 @@ included. They are written from observation, not from what the code "should" do.
 A screenshot is evidence for a UI criterion; for change requests, before/after screenshots that
 also show the preserved behavior. Screenshots go into the PR, not the repo (Evidence policy).
 A screenshot proves a criterion only against the spec's "User experience": every state it lists
-(empty, loading, error, success, no permission), compared with the linked design if there is one.
+(empty, loading, error, success), compared with the linked design. Bu projede tasarım bağı her
+zaman vardır: `docs/design/` (bkz. oradaki `README.md`).
 
 ## Evidence policy
 1. **Evidence is referenced, not stored.** Each acceptance criterion's evidence is a pointer: the
@@ -73,9 +80,10 @@ A screenshot proves a criterion only against the spec's "User experience": every
    Rerun it whenever `scripts/check.conf` changes.
 3. Warm-process caches trade memory for speed for humans who build rarely; with an agent, trade the
    seconds back for a flat memory profile.
-4. Interactive modes (watchers, dev servers, REPLs) never belong in check. e2e runs single-worker
-   and headless by default; one component owns the app-under-test lifecycle — started for the run,
-   stopped at the end, including on failure and timeout.
+4. Interactive modes (watchers, dev servers, REPLs) never belong in check. UI tests run
+   single-worker and offscreen (`QT_QPA_PLATFORM=offscreen`) by default; one component owns the
+   `QApplication` lifecycle — created for the run, torn down at the end, including on failure and
+   timeout. No window, timer or event loop outlives a run.
 
 ## Two speeds, one contract
 1. `./scripts/check` is still the one way to ask "is this good?"; `--fast` is a speed of the
@@ -84,7 +92,7 @@ A screenshot proves a criterion only against the spec's "User experience": every
    iteration → `--fast`. Segment exits, PROVE steps, recovery-ramp exits, the verify table and CI
    → `CHECK GREEN (full, …)`. `scripts/doctor` warns when a shipped spec, or in CI the pull
    request description, shows `CHECK GREEN (fast, …)` and no `(full, …)`.
-3. Fast: compile and the quick tests (unit, lint). Full only: e2e, long integration suites, and
+3. Fast: compile and the quick tests (unit, lint). Full only: UI tests, long integration suites, and
    any single step over ~a minute — the minute is a per-step threshold, not a total for the fast
    profile; fast has no fixed total. Bootstrap decides per stack and tags the steps `[fast]` in
    check.conf. When fast grows too long to iterate with, take steps out in this order: lint

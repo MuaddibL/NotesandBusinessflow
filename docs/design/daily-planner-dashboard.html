@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="tr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"inverse-primary":"#4d44e3","on-error-container":"#ffdad6","primary-fixed":"#e2dfff","on-primary-fixed-variant":"#3323cc","surface-bright":"#31394d","surface":"#0b1326","secondary-fixed":"#acedff","inverse-surface":"#dae2fd","secondary":"#4cd7f6","surface-container-lowest":"#060e20","outline":"#918fa1","primary":"#c3c0ff","on-primary":"#1d00a5","primary-container":"#4f46e5","on-tertiary-container":"#d9d8ff","secondary-container":"#03b5d3","surface-variant":"#2d3449","on-secondary-container":"#00424e","tertiary":"#c0c1ff","tertiary-fixed-dim":"#c0c1ff","surface-container-high":"#222a3d","on-primary-container":"#dad7ff","background":"#0b1326","on-secondary":"#003640","primary-fixed-dim":"#c3c0ff","on-primary-fixed":"#0f0069","on-surface":"#dae2fd","on-background":"#dae2fd","surface-dim":"#0b1326","error-container":"#93000a","on-error":"#690005","secondary-fixed-dim":"#4cd7f6","surface-tint":"#c3c0ff","on-secondary-fixed":"#001f26","on-tertiary":"#1000a9","on-tertiary-fixed-variant":"#2f2ebe","tertiary-fixed":"#e1e0ff","error":"#ffb4ab","surface-container-highest":"#2d3449","surface-container":"#171f33","on-secondary-fixed-variant":"#004e5c","tertiary-container":"#4b4dd8","on-surface-variant":"#c7c4d8","surface-container-low":"#131b2e","inverse-on-surface":"#283044","outline-variant":"#464555","on-tertiary-fixed":"#07006c"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-xl":"2rem","gutter-dense":"0.5rem","space-md":"0.75rem","space-sm":"0.5rem","margin-compact":"1rem","gutter":"1rem","space-xs":"0.25rem","space-lg":"1.25rem","margin":"1.5rem"},"fontFamily":{"headline-sm":["Inter"],"label-md":["Inter"],"headline-lg-mobile":["Inter"],"code-md":["JetBrains Mono"],"headline-lg":["Inter"],"label-sm":["Inter"],"headline-md":["Inter"],"body-sm":["Inter"],"body-lg":["Inter"],"body-md":["Inter"],"display":["Inter"]},"fontSize":{"headline-sm":["15px",{"lineHeight":"20px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg-mobile":["20px",{"lineHeight":"28px","letterSpacing":"-0.015em","fontWeight":"600"}],"code-md":["12px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}],"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"600"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-md":["18px",{"lineHeight":"24px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"16px","letterSpacing":"0em","fontWeight":"400"}],"body-lg":["15px",{"lineHeight":"24px","letterSpacing":"-0.005em","fontWeight":"400"}],"body-md":["13px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"display":["32px",{"lineHeight":"40px","letterSpacing":"-0.025em","fontWeight":"600"}]}}}};</script></head><body class="bg-surface text-on-surface font-body-md text-body-md antialiased min-h-screen"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-low z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col"><div class="h-14 px-margin-compact flex items-center justify-between gap-space-sm bg-surface-container-lowest/50"><div class="flex items-center gap-space-sm overflow-hidden"><img alt="TaskCraft Logo" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XcTh8hhmJ1miqyGAJBZ6RZNds47nTTzFMmUfuHJO4yyFabCQWO-9gA-oaR11btx1lFGJFJiSYvku9qSX5nM8hGSEPTnbuXy7_53_uTESu8ChxMGE1Y6-J_2nEFJHJlKHB8oipz4HjuSAspSqELc1jr0MnQNqodP7GaUBt5kH_XYMdS26WsrfrID0wfdEobLHzKLkim-CI1fnra0ovtivLEHPGvSgGPPvrCLra_PCNI"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-headline-sm text-on-surface truncate">FlowCraft</span><span class="font-label-sm text-label-sm text-on-surface-variant truncate">Kişisel Çalışma Alanı</span></div></div><button aria-label="Çalışma Alanı Değiştir" class="flex items-center justify-center p-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors flex-shrink-0" type="button"><span class="material-symbols-outlined text-[18px]">unfold_more</span></button></div><div class="px-margin-compact pt-space-md pb-space-xs"><button class="w-full flex items-center justify-between px-space-md py-space-xs rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[16px]">search</span><span class="font-body-sm text-body-sm">Hızlı Ara...</span></div><kbd class="font-code-md text-code-md px-space-xs py-0.5 rounded bg-surface-container-highest text-on-surface-variant">⌘K</kbd></button></div><div class="px-margin-compact pt-space-md pb-space-xs"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline px-space-xs">Ana Menü</span></div><nav class="flex flex-col gap-0.5 px-margin-compact" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="gorev-panosu" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="font-body-md text-body-md">Görev Panosu</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="notlarim-ve-belgeler" href="#"><span class="material-symbols-outlined text-[18px]">description</span><span class="font-body-md text-body-md">Notlarım &amp; Belgeler</span></a><a aria-current="page" class="flex items-center gap-space-md px-space-md py-space-sm transition-colors bg-primary-container text-on-primary-container font-semibold rounded-lg" data-path="gunluk-planlayici" href="#"><span class="material-symbols-outlined text-[18px]">calendar_today</span><span class="font-body-md text-body-md">Günlük Planlayıcı</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="projeler" href="#"><span class="material-symbols-outlined text-[18px]">folder_open</span><span class="font-body-md text-body-md">Projeler</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="etiketler-ve-arsiv" href="#"><span class="material-symbols-outlined text-[18px]">archive</span><span class="font-body-md text-body-md">Etiketler &amp; Arşiv</span></a></nav><div class="px-margin-compact pt-space-lg pb-space-xs flex items-center justify-between"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline px-space-xs">Son Projeler</span><button aria-label="Yeni Proje" class="text-on-surface-variant hover:text-on-surface flex items-center p-0.5 rounded" type="button"><span class="material-symbols-outlined text-[16px]">add</span></button></div><div class="flex flex-col gap-0.5 px-margin-compact"><a class="flex items-center justify-between px-space-md py-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" href="#"><div class="flex items-center gap-space-sm"><span class="w-2 h-2 rounded-full bg-secondary"></span><span class="font-body-sm text-body-sm truncate">Sprint 24 Tasarımı</span></div><span class="font-code-md text-code-md text-outline">12</span></a><a class="flex items-center justify-between px-space-md py-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" href="#"><div class="flex items-center gap-space-sm"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="font-body-sm text-body-sm truncate">API Entegrasyonu</span></div><span class="font-code-md text-code-md text-outline">5</span></a><a class="flex items-center justify-between px-space-md py-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" href="#"><div class="flex items-center gap-space-sm"><span class="w-2 h-2 rounded-full bg-secondary-container"></span><span class="font-body-sm text-body-sm truncate">Kullanıcı Testleri</span></div><span class="font-code-md text-code-md text-outline">8</span></a></div></div><div class="p-margin-compact flex flex-col gap-space-sm bg-surface-container-lowest/30"><div class="flex items-center justify-between px-space-xs py-space-xs"><div class="flex items-center gap-space-xs text-on-surface-variant"><span class="material-symbols-outlined text-[16px] text-secondary">cloud_done</span><span class="font-label-sm text-label-sm">Senkronize Edildi</span></div><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span></div><button class="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">settings</span><span class="font-body-sm text-body-sm">Ayarlar &amp; Tercihler</span></button></div></aside><div class="pl-64 flex flex-col min-h-screen"><header class="fixed top-0 left-64 right-0 h-14 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-margin"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm"><span class="hover:text-on-surface transition-colors cursor-pointer">FlowCraft</span><span class="text-outline">/</span><span class="text-on-surface font-semibold">Çalışma Alanı</span></div><div class="h-4 w-px bg-outline-variant/30 hidden sm:block"></div><div class="hidden sm:flex items-center gap-space-xs px-space-sm py-0.5 rounded-full bg-surface-container text-on-surface-variant"><span class="material-symbols-outlined text-[14px] text-secondary">sync</span><span class="font-label-sm text-label-sm">Senkronize</span></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs"><button aria-label="Filtrele" class="flex items-center gap-space-xs px-space-sm py-1 rounded bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">filter_list</span><span class="font-body-sm text-body-sm hidden md:inline">Filtrele</span></button><button aria-label="Sırala" class="flex items-center gap-space-xs px-space-sm py-1 rounded bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">sort</span><span class="font-body-sm text-body-sm hidden md:inline">Sırala</span></button></div><div class="h-4 w-px bg-outline-variant/30"></div><div class="flex items-center gap-space-xs"><button aria-label="Bildirimler" class="relative p-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-secondary"></span></button><button aria-label="Yardım ve Kısayollar" class="p-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors hidden sm:flex" type="button"><span class="material-symbols-outlined text-[20px]">help_outline</span></button></div><div class="flex items-center gap-space-sm pl-space-xs"><img alt="Profile" class="w-8 h-8 rounded-full object-cover flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAit8dbvZyYz5rd_PywydUA3EU2abJE2L7ojnHiC7yrKF_Jh8x5RKauaxGQDfJGRRcUVtb1dpE-lrLIpNk-EJq34tgMkP-W9_huKG1EKPSXihQ2KeVPMshZFoIMBhHkhRWSkf0kpEFhNZJa2pO5-mKe8HGadiMfNsQcKednMXiL4dCI01FMg4KSHqWyWx8FBdjrdxG65RGYyqndAoRLmWYEBgZ1g89Iej3qKzaE1ZVq"/></div></div></header><main class="w-full pt-14 px-margin bg-surface flex-1"><div class="flex flex-col w-full pb-margin">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md mb-space-lg">
+<div class="flex items-center gap-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">24 Ekim 2024 • Perşembe</span>
+<span class="inline-flex items-center px-space-xs py-0.5 rounded bg-surface-container-high text-on-surface-variant font-code-md text-code-md">Hafta 43</span>
+</div>
+<div class="flex items-baseline gap-space-md mt-0.5">
+<span class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Günlük Planlayıcı &amp; Akış</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant hidden lg:inline">Zaman Blokları ve Odak Matrisi</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-sm flex-wrap">
+<div class="flex items-center bg-surface-container-low p-1 rounded-xl shadow-sm">
+<button class="flex items-center gap-space-xs px-space-md py-1 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md transition-all" id="viewTimelineBtn">
+<span class="material-symbols-outlined text-[16px]">view_timeline</span>
+<span>Çizelge</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-1 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" id="viewMatrixBtn">
+<span class="material-symbols-outlined text-[16px]">grid_view</span>
+<span>Eisenhower Matrisi</span>
+</button>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Önceki Gün">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="px-space-md py-1 h-8 rounded-lg bg-surface-container font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors">
+          Bugün
+        </button>
+<button class="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Sonraki Gün">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+<button class="flex items-center gap-space-xs px-space-md py-1.5 rounded-lg bg-primary-container text-on-primary-container font-label-md text-label-md shadow-md hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>Yeni Zaman Bloğu</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-margin items-start">
+<div class="xl:col-span-8 flex flex-col gap-margin">
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-md">
+<div class="flex flex-col p-space-md rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="font-label-sm text-label-sm">Planlanan Süre</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">schedule</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">6s 45dk</span>
+<span class="font-body-sm text-body-sm text-outline mt-0.5">8 Slot rezerve</span>
+</div>
+<div class="flex flex-col p-space-md rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="font-label-sm text-label-sm">Derin Odak (Deep)</span>
+<span class="material-symbols-outlined text-[16px] text-primary">bolt</span>
+</div>
+<span class="font-headline-md text-headline-md text-primary">3s 15dk</span>
+<span class="font-body-sm text-body-sm text-outline mt-0.5">%48 Odak oranı</span>
+</div>
+<div class="flex flex-col p-space-md rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="font-label-sm text-label-sm">Tamamlanma</span>
+<span class="material-symbols-outlined text-[16px] text-secondary-container">task_alt</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">4 / 7</span>
+<div class="w-full bg-surface-container-highest h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-secondary-container h-full w-[57%]"></div>
+</div>
+</div>
+<div class="flex flex-col p-space-md rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="font-label-sm text-label-sm">Bilişsel Yük</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary">psychology</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">Dengeli</span>
+<span class="font-body-sm text-body-sm text-outline mt-0.5">Mola aralığı: 15dk</span>
+</div>
+</div>
+<div class="flex flex-col rounded-xl bg-surface-container-low shadow-md overflow-hidden">
+<div class="flex items-center justify-between px-space-lg py-space-md bg-surface-container">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-secondary">view_day</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Saatlik Akış Çizelgesi</span>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Şu Anki Saat: 11:20</span>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface p-1 rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="relative p-space-lg flex flex-col gap-0 select-none">
+<div class="absolute left-[88px] top-0 bottom-0 w-px bg-surface-container-highest"></div>
+<div class="absolute left-6 right-6 top-[280px] z-20 flex items-center pointer-events-none">
+<span class="px-1.5 py-0.5 rounded bg-secondary text-on-secondary font-code-md text-code-md shadow-sm">11:20</span>
+<div class="flex-1 h-0.5 bg-secondary shadow-sm"></div>
+<span class="w-2 h-2 rounded-full bg-secondary -ml-1"></span>
+</div>
+<div class="flex items-start min-h-[76px] relative group">
+<div class="w-16 font-code-md text-code-md text-outline pt-1 shrink-0 text-right pr-space-md">09:00</div>
+<div class="w-6 shrink-0 flex justify-center pt-2">
+<span class="w-2 h-2 rounded-full bg-surface-variant"></span>
+</div>
+<div class="flex-1 pl-space-md pb-space-sm">
+<div class="p-space-md rounded-xl bg-surface-container-highest/40 hover:bg-surface-container-highest/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-space-sm shadow-sm opacity-70">
+<div class="flex items-center gap-space-md">
+<div class="w-1 h-8 rounded-full bg-outline"></div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm text-on-surface line-through">Günlük Hazırlık &amp; Gelen Kutusu Temizliği</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">Tamamlandı</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">09:00 - 09:30 • 30 dk</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[18px] text-secondary">check_circle</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-start min-h-[96px] relative group">
+<div class="w-16 font-code-md text-code-md text-outline pt-1 shrink-0 text-right pr-space-md">09:30</div>
+<div class="w-6 shrink-0 flex justify-center pt-2">
+<span class="w-2 h-2 rounded-full bg-surface-variant"></span>
+</div>
+<div class="flex-1 pl-space-md pb-space-sm">
+<div class="p-space-md rounded-xl bg-surface-container-high hover:bg-surface-bright transition-all flex flex-col md:flex-row md:items-center justify-between gap-space-sm shadow-sm opacity-85">
+<div class="flex items-center gap-space-md">
+<div class="w-1 h-10 rounded-full bg-secondary"></div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm text-on-surface">Tasarım İnceleme Toplantısı</span>
+<span class="px-space-xs py-0.5 rounded bg-secondary-container/20 text-secondary font-label-sm text-label-sm">Google Meet</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">09:30 - 10:15 • 45 dk • UI Kütüphanesi &amp; Mobil Deneyim</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full object-cover" data-alt="Product designer avatar with glasses in modern minimal studio portrait, muted blue lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRjDnCAp0OfSdFnWKS2xCmwHe7fQQ_YoOQbqpHDLSP3oRkIIV2jCsQU1aonuFIG-BbPXWHObUtmQnGvqQHcIvdbKmcefk9IOAucpSOxT00jPy8lm9VJmCMrvuRjU_0fEIhz1h01eM7U1kPVCqnDDb2RqwrlCXoYVyppcwKCk0uy7KI0SxKbE1QsXSG6LRSLF99hD0D6z4PcdvKpEAtEanLpNfq5mW1l-U7tjmTInH5"/>
+<img class="w-6 h-6 rounded-full object-cover" data-alt="Frontend engineer avatar in dark workspace with high contrast neon rim lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXpAjpgWo_Y-CFkbQ8AMSwTmTwO9NLcbRw4PpXwEAB_jcrz5bagbt8F_bu0pvrMPzjpL2YZ05sGVFjPTs6ln1_u2fiL1VvfoI-CCydiRyKsnZb7_PyAvD_qFKZ2vKhl3KJqBi0M4A8V1uBUk_BvkW4VF4riEtmZigEpgr8v0jNzjb12XOGhb-ytYxRMwUyy-gcNexhJ5CK_Xw4dxiIiV1qnqCiiOo5uUHNG75F5l4P"/>
+</div>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[18px]">launch</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-start min-h-[44px] relative">
+<div class="w-16 font-code-md text-code-md text-outline pt-0 shrink-0 text-right pr-space-md">10:15</div>
+<div class="w-6 shrink-0 flex justify-center pt-1">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+</div>
+<div class="flex-1 pl-space-md pb-space-xs">
+<div class="py-1 px-space-md rounded-lg bg-surface-container-lowest/60 flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-space-sm font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[15px] text-tertiary">coffee</span>
+<span>Kahve &amp; Esneme Molası</span>
+</div>
+<span class="font-code-md text-code-md text-outline">15 dk</span>
+</div>
+</div>
+</div>
+<div class="flex items-start min-h-[140px] relative group">
+<div class="w-16 font-code-md text-code-md text-primary pt-1 shrink-0 text-right pr-space-md font-semibold">10:30</div>
+<div class="w-6 shrink-0 flex justify-center pt-2">
+<span class="w-3 h-3 rounded-full bg-primary-container ring-4 ring-primary-container/20"></span>
+</div>
+<div class="flex-1 pl-space-md pb-space-sm">
+<div class="p-space-lg rounded-xl bg-surface-container-high/90 hover:bg-surface-bright transition-all flex flex-col gap-space-md shadow-md relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-container"></div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="px-space-xs py-0.5 rounded bg-primary-container text-on-primary font-label-sm text-label-sm uppercase tracking-wide">Şu Anda Aktif</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-variant text-on-surface-variant font-label-sm text-label-sm">Odak Modu</span>
+</div>
+<span class="font-code-md text-code-md text-secondary">Kalan Süre: 28 dk</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">API Entegrasyon Geliştirmesi</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Webhook veri sözleşmesi ve kimlik doğrulama servisleri için uç noktaların optimizasyonu. Pomodoro 45 dk hedeflendi.</p>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="inline-flex items-center gap-1 font-code-md text-code-md px-space-xs py-0.5 rounded bg-surface-container-lowest text-primary">
+<span class="material-symbols-outlined text-[14px]">timer</span> 45 dk Seans
+                    </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">FlowCraft-Core v2.4</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-md py-1 rounded bg-primary-container text-on-primary font-label-md text-label-md hover:brightness-110 transition-all">
+                      Seansı Bitir
+                    </button>
+<button class="p-1.5 rounded bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[16px]">pause</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-start min-h-[50px] relative">
+<div class="w-16 font-code-md text-code-md text-outline pt-1 shrink-0 text-right pr-space-md">12:00</div>
+<div class="w-6 shrink-0 flex justify-center pt-2">
+<span class="w-2 h-2 rounded-full bg-surface-variant"></span>
+</div>
+<div class="flex-1 pl-space-md pb-space-sm">
+<div class="py-space-sm px-space-md rounded-xl bg-surface-container-lowest/80 flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-space-sm font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">restaurant</span>
+<span>Öğle Yemeği &amp; Zihinsel Tazelenme</span>
+</div>
+<span class="font-code-md text-code-md text-outline">12:00 - 13:30 • 90 dk</span>
+</div>
+</div>
+</div>
+<div class="flex items-start min-h-[96px] relative group">
+<div class="w-16 font-code-md text-code-md text-outline pt-1 shrink-0 text-right pr-space-md">13:30</div>
+<div class="w-6 shrink-0 flex justify-center pt-2">
+<span class="w-2 h-2 rounded-full bg-surface-variant"></span>
+</div>
+<div class="flex-1 pl-space-md pb-space-sm">
+<div class="p-space-md rounded-xl bg-surface-container-high hover:bg-surface-bright transition-all flex flex-col md:flex-row md:items-center justify-between gap-space-sm shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-1 h-10 rounded-full bg-secondary-container"></div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm text-on-surface">Müşteri Sunumu Hazırlığı</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm">Yüksek Öncelik</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">13:30 - 14:30 • 60 dk • Q3 Metrikleri ve Yol Haritası Slaytları</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[18px] text-outline">slideshow</span>
+<button class="px-space-sm py-1 rounded bg-surface-container text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm">
+                    Düzenle
+                  </button>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-start min-h-[44px] relative">
+<div class="w-16 font-code-md text-code-md text-outline pt-0 shrink-0 text-right pr-space-md">14:30</div>
+<div class="w-6 shrink-0 flex justify-center pt-1">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+</div>
+<div class="flex-1 pl-space-md pb-space-xs">
+<div class="py-1 px-space-md rounded-lg bg-surface-container-lowest/60 flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-space-sm font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[15px] text-tertiary">self_improvement</span>
+<span>Zihin Boşaltma &amp; Çay Molası</span>
+</div>
+<span class="font-code-md text-code-md text-outline">30 dk</span>
+</div>
+</div>
+</div>
+<div class="flex items-start min-h-[110px] relative group">
+<div class="w-16 font-code-md text-code-md text-outline pt-1 shrink-0 text-right pr-space-md">15:00</div>
+<div class="w-6 shrink-0 flex justify-center pt-2">
+<span class="w-2 h-2 rounded-full bg-surface-variant"></span>
+</div>
+<div class="flex-1 pl-space-md pb-space-sm">
+<div class="p-space-md rounded-xl bg-surface-container-high hover:bg-surface-bright transition-all flex flex-col md:flex-row md:items-center justify-between gap-space-sm shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-1 h-12 rounded-full bg-primary"></div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm text-on-surface">Görev Maddelerini Tamamlama (Sprint 24)</span>
+<span class="px-space-xs py-0.5 rounded bg-primary/10 text-primary font-label-sm text-label-sm">2 Pomodoro</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">15:00 - 17:00 • 120 dk • Kod incelemeleri, PR birleştirmeleri ve bilet kapanışları</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-code-md text-code-md text-outline">5 Alt Görev</span>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[18px]">checklist</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-start min-h-[80px] relative group">
+<div class="w-16 font-code-md text-code-md text-outline pt-1 shrink-0 text-right pr-space-md">17:00</div>
+<div class="w-6 shrink-0 flex justify-center pt-2">
+<span class="w-2 h-2 rounded-full bg-surface-variant"></span>
+</div>
+<div class="flex-1 pl-space-md pb-space-sm">
+<div class="p-space-md rounded-xl bg-surface-container-highest/50 hover:bg-surface-container-highest/80 transition-all flex flex-col md:flex-row md:items-center justify-between gap-space-sm shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-1 h-8 rounded-full bg-outline"></div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm text-on-surface">Gün Sonu Değerlendirmesi &amp; Yarının Planı</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">17:00 - 18:00 • 60 dk • Günlük log tutma, açık sekmeleri temizleme</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[18px] text-outline">done_all</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col rounded-xl bg-surface-container-low shadow-sm p-space-lg">
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-tertiary">grid_4x4</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Eisenhower Öncelik Matrisi</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Hızlı Karar Çerçevesi</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="p-space-md rounded-xl bg-surface-container flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-error flex items-center gap-1 font-semibold">
+<span class="w-2 h-2 rounded-full bg-error"></span> ACİL &amp; ÖNEMLİ (Hemen Yap)
+              </span>
+<span class="font-code-md text-code-md text-outline">2 Madde</span>
+</div>
+<div class="space-y-1.5">
+<div class="p-space-xs px-space-sm rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center justify-between">
+<span>Webhook SSL sertifika süresi yenilemesi</span>
+<span class="text-error font-code-md text-code-md">13:00</span>
+</div>
+<div class="p-space-xs px-space-sm rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center justify-between">
+<span>Müşteri sunum slaytları son kontrolü</span>
+<span class="text-error font-code-md text-code-md">14:00</span>
+</div>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-secondary flex items-center gap-1 font-semibold">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> ACİL DEĞİL &amp; ÖNEMLİ (Planla)
+              </span>
+<span class="font-code-md text-code-md text-outline">3 Madde</span>
+</div>
+<div class="space-y-1.5">
+<div class="p-space-xs px-space-sm rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center justify-between">
+<span>Q4 Altyapı ölçekleme dökümanı</span>
+<span class="text-outline font-code-md text-code-md">Cuma</span>
+</div>
+<div class="p-space-xs px-space-sm rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center justify-between">
+<span>Refaktör: Yetkilendirme middleware'i</span>
+<span class="text-outline font-code-md text-code-md">Gelecek Hf.</span>
+</div>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-tertiary flex items-center gap-1 font-semibold">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span> ACİL &amp; ÖNEMSİZ (Devret)
+              </span>
+<span class="font-code-md text-code-md text-outline">1 Madde</span>
+</div>
+<div class="space-y-1.5">
+<div class="p-space-xs px-space-sm rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center justify-between">
+<span>Rutin sunucu metrik raporu çıktısı</span>
+<span class="text-tertiary font-code-md text-code-md">Stajyer</span>
+</div>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline flex items-center gap-1 font-semibold">
+<span class="w-2 h-2 rounded-full bg-outline"></span> ACİL DEĞİL &amp; ÖNEMSİZ (Ele)
+              </span>
+<span class="font-code-md text-code-md text-outline">2 Madde</span>
+</div>
+<div class="space-y-1.5">
+<div class="p-space-xs px-space-sm rounded bg-surface-container-high text-on-surface-variant font-body-sm text-body-sm flex items-center justify-between line-through">
+<span>Eski Slack kanallarını arşivleme</span>
+<span class="material-symbols-outlined text-[14px]">delete</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="xl:col-span-4 flex flex-col gap-margin">
+<div class="flex flex-col p-space-lg rounded-xl bg-surface-container-low shadow-md relative overflow-hidden">
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-secondary">timer</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Pomodoro Odak Zamanlayıcısı</span>
+</div>
+<span class="px-space-xs py-0.5 rounded bg-surface-container-high text-secondary font-code-md text-code-md">Seans: 3/4</span>
+</div>
+<div class="flex flex-col items-center justify-center my-space-md">
+<div class="relative w-44 h-44 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90 transform" viewbox="0 0 100 100">
+<circle class="text-surface-container-highest stroke-current" cx="50" cy="50" fill="transparent" r="42" stroke-width="6"></circle>
+<circle class="text-primary stroke-current" cx="50" cy="50" fill="transparent" r="42" stroke-dasharray="264" stroke-dashoffset="75" stroke-linecap="round" stroke-width="6"></circle>
+</svg>
+<div class="absolute flex flex-col items-center justify-center text-center">
+<span class="font-display text-display text-on-surface tracking-tight font-semibold" id="timerDisplay">27:42</span>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mt-0.5">Derin Çalışma</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm mt-space-lg">
+<button class="flex items-center gap-space-xs px-space-xl py-2 rounded-lg bg-primary-container text-on-primary-container font-label-md text-label-md shadow-md hover:brightness-110 active:scale-95 transition-all" id="toggleTimerBtn">
+<span class="material-symbols-outlined text-[18px]">pause</span>
+<span>Duraklat</span>
+</button>
+<button class="p-2 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" id="resetTimerBtn" title="Sıfırla">
+<span class="material-symbols-outlined text-[18px]">restart_alt</span>
+</button>
+</div>
+</div>
+<div class="pt-space-md bg-surface-container-lowest/40 -mx-space-lg -mb-space-lg p-space-md flex items-center justify-between">
+<div class="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Sonraki: 5 dk Kısa Mola</span>
+</div>
+<span class="font-code-md text-code-md text-outline">Toplam: 90 dk</span>
+</div>
+</div>
+<div class="flex flex-col p-space-lg rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">target</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Bugünün 3 Büyük Odağı</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Günün Kilidi</span>
+</div>
+<div class="flex flex-col gap-space-sm">
+<div class="p-space-md rounded-xl bg-surface-container hover:bg-surface-container-high transition-all flex items-start gap-space-md shadow-sm">
+<button class="mt-0.5 w-5 h-5 rounded bg-primary-container text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</button>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface line-through opacity-70">Tasarım ekibiyle UI bileşen onayları</span>
+<span class="font-body-sm text-body-sm text-outline mt-0.5">Toplantı bitti, geri bildirimler işlendi.</span>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container hover:bg-surface-container-high transition-all flex items-start gap-space-md shadow-sm">
+<button class="mt-0.5 w-5 h-5 rounded bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0 hover:bg-primary-container hover:text-on-primary transition-colors">
+</button>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface">API Webhook yükleme güvenliği</span>
+<span class="font-body-sm text-body-sm text-secondary mt-0.5">Şu an odak modunda (Aktif)</span>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container hover:bg-surface-container-high transition-all flex items-start gap-space-md shadow-sm">
+<button class="mt-0.5 w-5 h-5 rounded bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0 hover:bg-primary-container hover:text-on-primary transition-colors">
+</button>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface">Müşteri sunumunun 14:30'a hazır edilmesi</span>
+<span class="font-body-sm text-body-sm text-outline mt-0.5">Ana başlıklar ve analiz grafikleri</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col p-space-lg rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-secondary">push_pin</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Hızlı Notlar &amp; Fikir Sandığı</span>
+</div>
+<button class="flex items-center justify-center w-6 h-6 rounded bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" title="Yeni Not Ekle">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+<div class="grid grid-cols-1 gap-space-md">
+<div class="p-space-md rounded-xl bg-surface-container hover:bg-surface-container-high transition-all flex flex-col gap-space-sm shadow-sm relative">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-secondary uppercase font-semibold">Fikir &amp; Tasarım</span>
+</div>
+<span class="font-code-md text-code-md text-outline">10:48</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface">
+              Yeni filtreleme çekmecesi için klavye yön tuşları desteği eklenmeli. 'J/K' tuşları doğrudan kartlar arasında gezdirebilir.
+            </p>
+<div class="flex items-center justify-between pt-1">
+<span class="font-code-md text-code-md text-outline">#UX #Klavye</span>
+<button class="text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[16px]">bookmark_add</span>
+</button>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container hover:bg-surface-container-high transition-all flex flex-col gap-space-sm shadow-sm relative">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<span class="font-label-sm text-label-sm text-primary uppercase font-semibold">Hatırlatıcı</span>
+</div>
+<span class="font-code-md text-code-md text-outline">Dün</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface">
+              Ahmet Bey ile görüşmeden önce son SLA raporunu PDF formatında arşiv klasörüne aktar.
+            </p>
+<div class="flex items-center justify-between pt-1">
+<span class="font-code-md text-code-md text-outline">#Müşteri #Rapor</span>
+<button class="text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[16px]">check_box_outline_blank</span>
+</button>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container hover:bg-surface-container-high transition-all flex flex-col gap-space-sm shadow-sm relative">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>
+<span class="font-label-sm text-label-sm text-tertiary uppercase font-semibold">Kaynak &amp; Link</span>
+</div>
+<span class="font-code-md text-code-md text-outline">08:15</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface">
+              PostgreSQL 16 connection pooling performans testi makalesi okundu. Bağlantı sınırını 120 olarak sabitlemek mantıklı.
+            </p>
+<div class="flex items-center justify-between pt-1">
+<span class="font-code-md text-code-md text-outline">#Veritabanı #DevOps</span>
+<button class="text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="flex items-center gap-space-sm p-space-xs px-space-md rounded-lg bg-surface-container-highest/50">
+<span class="material-symbols-outlined text-[16px] text-outline">edit_note</span>
+<input class="bg-transparent border-none text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none w-full" placeholder="Yeni bir hızlı not karala..." type="text"/>
+<span class="font-code-md text-code-md text-outline">↵</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    let isRunning = true;
+    let secondsLeft = 27 * 60 + 42;
+    const timerDisplay = document.getElementById('timerDisplay');
+    const toggleBtn = document.getElementById('toggleTimerBtn');
+    const resetBtn = document.getElementById('resetTimerBtn');
+
+    function updateDisplay() {
+      if (!timerDisplay) return;
+      const mins = Math.floor(secondsLeft / 60);
+      const secs = secondsLeft % 60;
+      timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    let interval = setInterval(() => {
+      if (isRunning && secondsLeft > 0) {
+        secondsLeft--;
+        updateDisplay();
+      }
+    }, 1000);
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        isRunning = !isRunning;
+        const icon = toggleBtn.querySelector('.material-symbols-outlined');
+        const text = toggleBtn.querySelector('span:not(.material-symbols-outlined)');
+        if (isRunning) {
+          if (icon) icon.textContent = 'pause';
+          if (text) text.textContent = 'Duraklat';
+        } else {
+          if (icon) icon.textContent = 'play_arrow';
+          if (text) text.textContent = 'Başlat';
+        }
+      });
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        secondsLeft = 45 * 60;
+        isRunning = false;
+        updateDisplay();
+        if (toggleBtn) {
+          const icon = toggleBtn.querySelector('.material-symbols-outlined');
+          const text = toggleBtn.querySelector('span:not(.material-symbols-outlined)');
+          if (icon) icon.textContent = 'play_arrow';
+          if (text) text.textContent = 'Başlat';
+        }
+      });
+    }
+
+    const viewTimelineBtn = document.getElementById('viewTimelineBtn');
+    const viewMatrixBtn = document.getElementById('viewMatrixBtn');
+    if (viewTimelineBtn && viewMatrixBtn) {
+      viewTimelineBtn.addEventListener('click', () => {
+        viewTimelineBtn.className = "flex items-center gap-space-xs px-space-md py-1 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md transition-all";
+        viewMatrixBtn.className = "flex items-center gap-space-xs px-space-md py-1 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all";
+      });
+      viewMatrixBtn.addEventListener('click', () => {
+        viewMatrixBtn.className = "flex items-center gap-space-xs px-space-md py-1 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md transition-all";
+        viewTimelineBtn.className = "flex items-center gap-space-xs px-space-md py-1 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all";
+      });
+    }
+  })();
+</script></main></div></body></html>
