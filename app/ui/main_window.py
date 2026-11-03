@@ -90,6 +90,10 @@ class MainWindow(QMainWindow):
         layout.addWidget(sidebar, 0)
         layout.addWidget(self.pages, 1)
         self.setCentralWidget(central)
+        # The sidebar is where the keyboard starts: without this the arrow keys do nothing until
+        # the user has clicked something (spec 0002, User experience). It has to come after the
+        # widget is in the window, or there is no window to register the focus with.
+        self.sections.setFocus()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Closing the window releases what the window owns (CB-8)."""
