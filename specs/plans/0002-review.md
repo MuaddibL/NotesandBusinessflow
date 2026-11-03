@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0002-plan.md`
 - Change set: `git diff main..HEAD` (`feature/0002-desktop-shell`, `0581f1c..3d1d848`; 48 dosya, +2170/-1106)
 - Reviewed by / on: bağımsız salt-okunur reviewer oturumu, 2026-11-03
-- Status: Fixes applied (2026-11-03) — awaiting re-review of the fix diff
+- Status: Fix round #2 in progress (2026-11-03) — re-review done, triaged, no third review round
 
 Bu dosya bir plan değildir (`scripts/doctor` yalnızca `NNNN-plan.md` dosyalarını okur). REVIEW
 segmentinin handoff'u olarak durur; VERIFY ve PR açıklaması buradan beslenir.
@@ -62,10 +62,9 @@ her commit sonrası `--fast` yeşil, fix diff'i review'a dönmeden önce full ye
 | F-11 | — | Noise; aksiyon yok. |
 
 **F-4'te reviewer'ın önerisinden sapıldı.** Reviewer `QListWidget#sections::item:focus` için bir
-QSS kuralı önermişti. Ölçüldü: gerçek odak ve aktif pencereyle bile Qt `::item:focus`, `:focus` ve
-`::item:selected:!active` için tek piksel boyamıyor (kontrol: seçim değişikliği pikselleri
-değiştiriyor). Kural ölü CSS olurdu. Bunun yerine klavyeyi takip eden seçim göstergesi kaldı ve
-test stylesheet'i geri okumak yerine iki render'ı karşılaştırıyor.
+QSS kuralı önermişti; o kural yazılmadı çünkü Qt onu yok sayıyor. Ölçümün tam hali aşağıda,
+"Fix round #2" bölümünde (F-R1): ilk yazdığım gerekçe fazlasını iddia ediyordu ve 2026-11-03'te
+düzeltildi.
 
 ## Pull request'e yazılacak (F-5)
 
@@ -372,3 +371,54 @@ kadar sistem fontu)" şerhi.
 
 **Segment handoff — REVIEW (spec 0002)**
 Next: human triage (real / noise / investigate) → düzeltmeler builder'a, "investigate" kalemler QA'ya.
+
+---
+
+# Fix round #1 review (2026-11-03)
+
+Fix diff'in (`62e0164..HEAD`) bağımsız ikinci turu koşuldu. Reviewer kendi koşumu:
+`CHECK GREEN (full, 6 steps, 7 s)`, 45 + 14 = 59 test, `-m ui` 5 ardışık koşumda yeşil (yeni
+render testi flaky değil). Security ve Performance boyutları clean. Önceki turun 11 bulgusundan
+7'si "kapandı", 3'ü "kısmen", 1'i noise olarak doğrulandı; 9 yeni kalem açıldı.
+
+## Triage — fix round #1
+
+Triage: MuaddibL, 2026-11-03, "A" seçeneği: aşağıdakiler düzeltilir, **üçüncü bir review turu
+koşulmaz**, doğrudan VERIFY'a geçilir. Gerekçe: bu turun bulguları artık kayıt doğruluğu
+seviyesinde; ürünü etkileyen bir kalem kalmadı.
+
+| # | Severity | Konu | Triage |
+|---|---|---|---|
+| F-R1 | MEDIUM | Odak görünürlüğü test edilmiyor; F-4'ün gerekçesi fazlasını iddia ediyor | **real** — bu turda |
+| F-R2 | MEDIUM-LOW | `open_database` sonrası açılış adımları korumasız: sessiz ölüm | **real** — bu turda |
+| F-R3 | MEDIUM-LOW | Kriter↔test haritası bayat (VERIFY doğrudan buradan besleniyor) | **real** — bu turda |
+| F-R4 | LOW | `docs/testing.md` ile `docs/security.md` yığın izi konusunda çelişiyor | **real** — ucuz |
+| F-R5 | LOW | İki dosya yine plan listesi dışında | **real** — ucuz |
+| F-R6 | LOW | `tokens.py` yorumu testin kanıtladığından fazlasını vaat ediyor | **real** — ucuz |
+| F-R7 | LOW | `main([])` boş argv'yi sessizce `sys.argv` ile değiştiriyor | **real** — tek kelime |
+| F-R8 | INFO | Açık transaction'lı bağlantıda `migrate()` patlar (bugün erişilemez) | **noise** |
+| F-R9 | INFO | `main()` paylaşılan QApplication'ın stylesheet'ini değiştiriyor | **noise** |
+
+## F-R1 — ölçümün tam hali
+
+Reviewer, F-4'ün gerekçesini "yanlış ölçüme dayanıyor" diye işaretledi ve `::item:focus`'un
+boyadığını gösteren bir komut verdi. **O komut burada tekrarlanmadı:** aynı komut, aktif pencere
+ve odaklı widget ile (`active True hasFocus True`) `red pixels present: False` veriyor. Ayırt
+edici ölçüm, kural **var** ve **yok** hâlleriyle aynı düzenekte:
+
+```
+without ::item:focus rule: active=True hasFocus=True -> focus changes pixels: True
+with    ::item:focus rule: active=True hasFocus=True -> focus changes pixels: True
+```
+
+Sonuç ikiye ayrılıyor:
+
+1. **`::item:focus` gerçekten ölü** — fark kuralın varlığından bağımsız ve birebir aynı. Kuralı
+   yazmama kararı doğruydu; reviewer'ın bu yöndeki olgu iddiası tekrarlanmıyor.
+2. **Ama odak yine de görünür** — Qt odaklı/odaksız seçimi kendisi farklı çiziyor. İlk ölçüm bunu
+   kaçırmıştı, çünkü odaksız referans görüntüsü pencere aktive edilmeden önce alınmıştı. Bu
+   yüzden "Qt odak için hiçbir şey boyamıyor" cümlesi yanlıştı ve kaldırıldı.
+
+F-R1'in asıl sonucu bu düzeltmeyle ayakta kalıyor: odak görünürlüğü **ölçülebilir**, dolayısıyla
+test edilebilirdi ve edilmemişti.
+
