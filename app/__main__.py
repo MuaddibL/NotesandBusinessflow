@@ -60,13 +60,22 @@ def main(
         show_box(storage_error_box(None, error))
         return 1
 
-    # After the database, not before: opening it is what proves the data directory is there and
-    # writable, and a failure to open has its own screen rather than a correlation id (CB-6).
-    configure_logging(log_file or log_path(os.environ, Path.home()))
-    sys.excepthook = unexpected_error_hook(show_box)
+    try:
+        # After the database, not before: opening it is what proves the data directory is there
+        # and writable, and a failure to open has its own screen rather than a correlation id.
+        configure_logging(log_file or log_path(os.environ, Path.home()))
+        sys.excepthook = unexpected_error_hook(show_box)
 
-    window = MainWindow(on_close=connection.close)
-    window.show()
+        window = MainWindow(on_close=connection.close)
+        window.show()
+    except Exception as error:
+        # The excepthook only covers what happens once the loop is running, and nothing is on
+        # screen yet: without this the process would exit in silence — in a windowed build
+        # without even a stderr for the traceback to land in (CB-6).
+        connection.close()
+        show_box(unexpected_error_box(None, report_unexpected(error)))
+        return 1
+
     return app.exec()
 
 

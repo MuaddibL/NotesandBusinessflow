@@ -17,6 +17,7 @@ from pytestqt.qtbot import QtBot
 from app.__main__ import main, unexpected_error_hook
 from app.shared.errors import StorageError
 from app.shared.paths import DATABASE_FILE_NAME, LOG_FILE_NAME
+from app.ui.error_dialog import UNEXPECTED_TITLE
 from app.ui.main_window import MainWindow
 
 
@@ -78,6 +79,27 @@ def test_a_healthy_start_opens_the_window_and_installs_the_hook(
     assert sys.excepthook is not sys.__excepthook__, "an unexpected error must reach the dialog"
     assert open_windows == [True], "exactly one window, open, by the time the loop starts"
     assert (tmp_path / "data" / LOG_FILE_NAME).exists(), "the log is ready before the first error"
+
+
+def test_a_failure_after_the_database_still_reaches_the_user(qtbot: QtBot, tmp_path: Path) -> None:
+    """Exiting in silence is the one thing CB-6 rules out, and a windowed build has no stderr."""
+    squatted_log = tmp_path / "data" / LOG_FILE_NAME
+    squatted_log.parent.mkdir(parents=True)
+    squatted_log.mkdir()  # a directory sits where the log file belongs
+    shown: list[QMessageBox] = []
+
+    exit_code = main(
+        [],
+        database=tmp_path / "data" / DATABASE_FILE_NAME,
+        log_file=squatted_log,
+        show_box=shown.append,
+    )
+
+    assert exit_code == 1
+    assert len(shown) == 1
+    qtbot.addWidget(shown[0])
+    assert shown[0].windowTitle() == UNEXPECTED_TITLE
+    assert not [w for w in QApplication.topLevelWidgets() if isinstance(w, MainWindow)]
 
 
 def test_the_installed_hook_shows_the_id_it_logged(
