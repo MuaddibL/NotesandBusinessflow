@@ -71,6 +71,8 @@ matches '^CHECK GREEN \(fast, 1 steps\)$' "no usable clock: times are left out, 
 # --- scripts/residue: same bare copy. Assertions never require an idle machine: they look for
 # this run's own marker, so another process starting meanwhile cannot make them flaky.
 cp "$ROOT/scripts/residue" "$C/scripts/residue"
+mkdir -p "$C/scripts/lib"
+cp "$ROOT/scripts/lib/classify-survivors" "$C/scripts/lib/classify-survivors"   # residue calls it
 residue() { run env ANEW_RESIDUE_SETTLE=1 ANEW_RESIDUE_MB=1000000 sh "$C/scripts/residue" "$@"; }
 LEAK=anew-residue-leak-$$
 
@@ -90,12 +92,52 @@ conf "unit: echo unit ran" "server: sh -c 'sleep 25; :' $LEAK >/dev/null 2>&1 &"
 residue
 exits 1 "residue: leaked process";               has "RESIDUE FOUND (full)" "leak is reported"
 has "$LEAK" "the survivor is named with its command line"
+matches '^after run 1: [0-9]+ processes, [0-9]+ survivor\(s\), [0-9]+ ignored([;]|$)' "residue: the summary says what was counted and what was ignored"
+env ANEW_RESIDUE_SETTLE=x sh "$C/scripts/residue" >/dev/null 2>&1; rc=$?; out=
+exits 2 "residue: a settle time that is not a number"
+
+# A survivor check cannot have started must not decide the result — the regression this whole
+# change exists for (spec 0003). Forced deterministically with a ps on PATH that reports a fixed
+# table and adds a kernel thread once the runs have begun. POSIX only: the Windows measurement
+# goes through PowerShell, and is covered by the classifier scenarios plus a real run (plan 0003).
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) echo "skip  residue: kernel-thread scenario is POSIX only (measurement here goes through PowerShell)" ;;
+  *)
+    mkdir -p "$TMP/fakeps"
+    cat > "$TMP/fakeps/ps" <<'FAKEPS'
+#!/bin/sh
+# A fixed process table. From the third call on — the runs have started by then — a kernel
+# thread appears, exactly the shape that made the residue job flaky in CI.
+n=$(cat "$FAKEPS_CALLS" 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" > "$FAKEPS_CALLS"
+printf '%s\n' "    1     0 /sbin/init" "    2     0 [kthreadd]" "  100     1 /bin/sh scripts/check"
+[ "$n" -ge 3 ] && printf '%s\n' "  777     2 [kworker/R-selftest]"
+[ "$n" -ge 3 ] && [ -n "${FAKEPS_LEAK:-}" ] && printf '%s\n' "  888     1 python -m pytest (orphaned by check)"
+exit 0
+FAKEPS
+    chmod +x "$TMP/fakeps/ps"
+    : > "$TMP/fakeps/calls"
+    conf 'unit [fast]: echo unit ran'
+    run env PATH="$TMP/fakeps:$PATH" FAKEPS_CALLS="$TMP/fakeps/calls" \
+        ANEW_RESIDUE_SETTLE=1 ANEW_RESIDUE_MB=1000000 sh "$C/scripts/residue" --fast
+    exits 0 "residue: a kernel thread appearing mid-run does not fail the test"
+    has "RESIDUE CLEAN" "residue: the run is clean despite the new process"
+    has "ignored — check cannot have started these" "residue: the ignored survivors get their own heading"
+    has "[kworker/R-selftest]" "residue: an ignored survivor is still named"
+    has "(kernel thread)" "residue: each ignored survivor carries its own reason"
+    matches 'after run 2: [0-9]+ processes, 0 survivor\(s\), 1 ignored' "residue: the kernel thread is counted as ignored, not as a survivor"
+    # The other half: ignoring the kernel thread must not swallow a real survivor next to it.
+    : > "$TMP/fakeps/calls"
+    run env PATH="$TMP/fakeps:$PATH" FAKEPS_CALLS="$TMP/fakeps/calls" FAKEPS_LEAK=1 \
+        ANEW_RESIDUE_SETTLE=1 ANEW_RESIDUE_MB=1000000 sh "$C/scripts/residue" --fast
+    exits 1 "residue: a survivor of check's own next to a kernel thread still fails"
+    has "survivor  888  python -m pytest (orphaned by check)" "residue: an orphan reparented to init is check's, not the system's"
+    has "(kernel thread)" "residue: the kernel thread is still reported as ignored"
+    ;;
+esac
 
 # --- scripts/lib/classify-survivors: synthetic process tables. A green residue run on a real
 # machine says nothing about the classification — the cases that matter (a kernel thread, an
 # orphan of check's own, an ancestry that cannot be walked) are fed in by hand.
-mkdir -p "$C/scripts/lib"
-cp "$ROOT/scripts/lib/classify-survivors" "$C/scripts/lib/classify-survivors"
 T=$(printf '\t')
 classify() { survivors=$1; shift; out=$(sh "$C/scripts/lib/classify-survivors" "$@" < "$survivors" 2>&1); rc=$?; }
 
