@@ -51,13 +51,19 @@ def test_an_empty_variable_is_not_a_location() -> None:
 def test_the_data_directory_is_never_the_working_directory() -> None:
     """The regression this file exists for: the user's data never lands next to the code.
 
-    Stated as "not under the current directory" rather than "absolute", because a POSIX-style
-    path is not absolute on Windows and the suite runs on both.
+    Stated structurally — the file hangs off the root the caller configured — rather than through
+    `resolve()` or `is_absolute()`. Both of those answer differently on Windows and on Linux for
+    the very strings this function is given, and the suite runs on both.
     """
-    for env in ({"LOCALAPPDATA": r"C:\local"}, {"XDG_DATA_HOME": "/xdg"}, {}):
+    roots = (
+        ({"LOCALAPPDATA": r"C:\local"}, Path(r"C:\local")),
+        ({"XDG_DATA_HOME": "/xdg"}, Path("/xdg")),
+        ({}, HOME / ".local" / "share"),
+    )
+    for env, root in roots:
         for path in (database_path(env, HOME), log_path(env, HOME)):
-            assert Path.cwd() not in path.resolve().parents
-            assert path.parent.name == APP_DIR_NAME
+            assert path.parent == root / APP_DIR_NAME
+            assert path.parent != Path()
 
 
 def test_the_database_and_the_log_sit_next_to_each_other() -> None:
