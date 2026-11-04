@@ -26,6 +26,9 @@ case "$#:${1:-}" in
   *) echo "usage: scripts/lib/classify-survivors <posix|windows> <process-table>" >&2; exit 2 ;;
 esac
 [ -r "$table" ] || { echo "classify-survivors: cannot read process table: $table" >&2; exit 2; }
+# An empty table is refused as well: awk's two-file idiom cannot tell an empty first file from the
+# second one, so every survivor would be read as a table row and vanish without a word.
+[ -s "$table" ] || { echo "classify-survivors: empty process table: $table" >&2; exit 2; }
 
 awk -F'\t' -v os="$os" '
   # The executable part of a Windows command line, lowercased and without its directory.

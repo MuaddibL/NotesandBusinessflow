@@ -151,6 +151,10 @@ classify /dev/null solaris "$C/table"
 exits 2 "classify: unknown platform"
 classify /dev/null posix "$TMP/no-such-table"
 exits 2 "classify: unreadable table";            has "cannot read process table" "classify: names the missing table"
+: > "$C/empty-table"
+printf '%s\n' "500${T}1${T}python leaked" > "$C/survivors"
+classify "$C/survivors" posix "$C/empty-table"
+exits 2 "classify: empty table";                 has "empty process table" "classify: an empty table never swallows a survivor"
 
 # POSIX. pid 1 is deliberately NOT a root: an orphan of check's own is reparented to init.
 printf '%s\n' \
