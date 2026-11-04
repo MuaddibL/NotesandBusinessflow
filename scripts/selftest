@@ -133,8 +133,10 @@ FAKEPS
     exits 0 "residue: a kernel thread appearing mid-run does not fail the test"
     has "RESIDUE CLEAN" "residue: the run is clean despite the new process"
     has "ignored — check cannot have started these" "residue: the ignored survivors get their own heading"
-    has "[kworker/R-selftest]" "residue: an ignored survivor is still named"
-    has "(kernel thread)" "residue: each ignored survivor carries its own reason"
+    # One line, pid + command + its own reason — not a collective footnote under the heading
+    # (spec CB-2). That two different reasons stay on their own lines is asserted on the
+    # synthetic Windows table below; POSIX has only one reason to give.
+    matches '^ +777 +\[kworker/R-selftest\] +\(kernel thread\)$' "residue: an ignored survivor is named on its own line, with its own reason"
     matches 'after run 2: [0-9]+ processes, 0 survivor\(s\), 1 ignored' "residue: the kernel thread is counted as ignored, not as a survivor"
     hasnt "a second line of the previous command" "residue: a wrapped command line is not a process"
     # The other half: ignoring the kernel thread must not swallow a real survivor next to it.
@@ -143,7 +145,7 @@ FAKEPS
         ANEW_RESIDUE_SETTLE=1 ANEW_RESIDUE_MB=1000000 sh "$C/scripts/residue" --fast
     exits 1 "residue: a survivor of check's own next to a kernel thread still fails"
     has "survivor  888  python -m pytest (orphaned by check)" "residue: an orphan reparented to init is check's, not the system's"
-    has "(kernel thread)" "residue: the kernel thread is still reported as ignored"
+    matches '^ +777 +\[kworker/R-selftest\] +\(kernel thread\)$' "residue: the kernel thread is still reported as ignored, with its reason"
     ;;
 esac
 
