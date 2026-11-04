@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0003-plan.md`
 - Round 1: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
 - Diff: `git diff main..HEAD` on `feature/0003-residue-noise`, 7 commit, 9 dosya
-- Status: fix round 2 tamam (8 real düzeltildi) — REVIEW round 3 bekliyor
+- Status: REVIEW round 3 tamam (5 yeni bulgu: F-20..F-24) — triyaj bekliyor
 
 Bulgular aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
 Triyaj (real / noise / investigate) insana aittir ve bu dosyaya triyaj tablosu olarak eklenir.
@@ -893,3 +893,175 @@ F-13'ün düzeltmesi ayrıca zorlanmış-POSIX koşumuyla doğrulandı (scratchp
 (`FAKEPS_LEAK=1`) hâlâ exit 1 + `survivor  888`.
 
 **Sıradaki: REVIEW round 3** — fix diff'i (`1543720..HEAD`) bağımsız incelemeye gider.
+
+---
+
+## REVIEW round 3 — 2026-11-04
+
+- Round 3: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
+- Diff: `git diff 1543720..HEAD` — 7 dosya, 85+/24−, 9 commit (fix round 2'nin tamamı)
+- Kapsam notu: F-12c (ölçütü check'in pid alt ağacıyla genişletmek) bilinçli olarak kapsam
+  dışı, ayrı CR'a bırakıldı — reviewer'a da böyle bildirildi.
+
+Rapor aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
+
+### Çalıştırılan doğrulamalar (reviewer, bu makinede, Windows/MINGW)
+
+| Komut | Sonuç |
+|---|---|
+| `./scripts/check` | `CHECK GREEN (full, 6 steps, 8 s)` — exit 0 |
+| `./scripts/doctor --strict` | `== result: 0 fail, 0 warn ==` — exit 0 |
+| `./scripts/selftest` | `== selftest: 107 passed, 0 failed, 1 skipped ==` — exit 0 |
+| `./scripts/residue --fast` | `RESIDUE FOUND (fast)` — 1 survivor: Chrome Beta renderer (aşağıda gözlem) |
+| `./scripts/residue` (full) | `RESIDUE FOUND (full)` — 1 survivor: Chrome Beta renderer (pid 34760, iki koşumda da aynı) |
+| `git ls-files -s scripts/` | `100755` hepsi, `scripts/lib/classify-survivors` dâhil (F-10 hâlâ kapalı) |
+| `git diff --name-only 1543720..HEAD` | 7 dosya; `main..HEAD` 10 dosya |
+
+Üreticinin tur sonu iddiaları (`check` yeşil, `doctor` 0 fail, `selftest` 107/0/1) **birebir doğrulandı**.
+
+Bu turda, önceki iki turda izin sınıflandırıcısının reddettiği PowerShell probu **çalıştı**; onunla iki ölçüm yapıldı:
+
+- `@(Get-CimInstance Win32_Process).Count` = 380, bunların `ParentProcessId`'si sayı olmayan **0** tanesi → `scripts/residue:68`'deki yeni `$2 ~ /^[0-9]+$/` süzgeci bu makinede **tek bir gerçek süreci bile düşürmüyor** (F-13 düzeltmesinin regresyon riski ölçülerek elendi).
+- `scripts/residue:49`'daki katlama ifadesi sentetik bir metinle sınandı: `"prog.exe --a=1`r`n# marker`tand more"` → `prog.exe --a=1 # marker and more`, sonuçta `[\r\n\t]` yok. İfade doğru (F-14'ün doğrudan ölçülemeyen yarısı — bkz. F-24).
+- Şu an canlı tabloda gömülü satır sonu/sekme taşıyan komut satırı yok (0 süreç), yani round-1'in vahşi doğa gözlemi bu turda yeniden üretilemedi.
+
+POSIX dalı bu makinede koşmuyor (`skip`); zorlanmış-POSIX koşumu için dosya yazmak gerekirdi, bunun yerine `scripts/residue:61-68`'in boru hattı birebir elle çalıştırıldı:
+
+```sh
+printf '%s\n' "    1     0 /sbin/init" "    2     0 [kthreadd]" "  100     1 /bin/sh scripts/check" \
+  "  and a second line of the previous command" "  4242 and the rest of a wrapped command line" |
+awk '{ pid=$1; parent=$2; sub(/^[ \t]*[0-9]+[ \t]+[0-9]+[ \t]+/,"")
+       if ($0 !~ /^ps -e -o pid= -o ppid= -o args=/) print pid "\t" parent "\t" $0 }' |
+awk -F'\t' '$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/'
+```
+→ yalnız `1`, `2`, `100` kalıyor; **her iki sarılmış satır da düşüyor** (F-13 kapandı).
+
+### 1. Round-2 bulgularının kapanış durumu
+
+| # | Durum | Kanıt |
+|---|---|---|
+| F-12 (a+b) | **tam kapandı** (kapsamdaki haliyle) | `docs/testing.md:95-99` ve `docs/commands.md:111-115` süreç yarısının da boşta makine istediğini, pencerede doğan yabancı çocuğun bilinçli olarak sayıldığını yazıyor; kırmızı koşumlar `specs/plans/0003-review.md:876-888`'de kayda geçmiş. Kod değişikliği yok — doğru. (F-12c kapsam dışı, ayrı CR.) Yalnız ifade üzerine bir çekince var: F-22. |
+| F-13 | **özünde kapandı, artığı var** | `scripts/residue:68` iki alanı da sayı istiyor (yukarıdaki yeniden üretim); `scripts/selftest:137,158` rakamla başlayan sarılmış satır + `hasnt`. Artık: sınıflandırıcı yarısı (`classify-survivors:44`) sınanmıyor ve simetrik durum açık → **F-20**. |
+| F-14 | **tam kapandı (kayıt olarak)** | `specs/plans/0003-plan.md:101` Windows katlamasının sentetik testi olmadığını ve kanıtın yalnız gerçek koşum olduğunu yazıyor. Kayıt artık bir parça eskidi → **F-24** (Info). |
+| F-15 | **özünde kapandı, artığı var** | `scripts/selftest:108-116`: dal `uname`/`/proc/meminfo`/`vm_stat` ile seçiliyor, sınanan çıktıyla değil; "ölçülemiyor" dalında skip yerine gerçek iddia var; `plan:97` güncellendi. Artık: o dal **desteklenen hiçbir platformda koşmuyor** → **F-21**. |
+| F-16 | **tam kapandı** | `specs/plans/0003-plan.md:6-10` review raporunun neden diffte olduğunu yazıyor; `git diff --name-only main..HEAD` 10 dosya = planın 9 dosyası + açıklanmış review raporu. |
+| F-17 | **tam kapandı** | `scripts/selftest:5-7,24` ve `docs/commands.md:123-125` "bu platform **ya da** bu çalışma alanı" diyor; üç `skip` çağrısının gerçekten ikisi depo şekliyle ilgili (`scripts/selftest:127,315,323`) — cümle artık çağrı yerlerini doğru anlatıyor. |
+| F-18 | **tam kapandı** | `docs/testing.md:92-93`: "…and is ignored — the WMI host the measurement itself activates included". |
+| F-19 | **tam kapandı** | `docs/commands.md:104-106` ve `scripts/residue:7-8` exit 2'nin iki anlamını aynı sözcüklerle söylüyor; her iki hata metni de betikte birebir var (`scripts/residue:72,105`). CB-4'ün "doküman ve betik aynı şeyi söyler" iddiası bu noktada tutuyor. |
+
+### 2. Regresyon taraması
+
+Regresyon **bulunmadı**. Tek tek bakıldı:
+
+- **Daha sıkı süzgeç gerçek süreç düşürmüyor**: Windows'ta ölçüldü (380 sürecin 0'ında sayı olmayan ppid); POSIX'te `ps -o ppid=` her zaman sayı veriyor ve yukarıdaki boru hattı yeniden üretiminde üç gerçek satırın üçü de kaldı.
+- **`classify-survivors:44`'ün yeni koşulu residue üzerinden davranış değiştirmiyor**: residue'nun verdiği tablo (`$TMP/again`) zaten `measure`'ın süzgecinden geçmiş durumda, yani tüm satırlarda $1 ve $2 sayı. Yön güvenli: eksik ebeveyn satırı = soy daha erken kırılır = `counted` (fail-closed).
+- **Round-1 düzeltmeleri yerinde**: boş tablo reddi (`/dev/null` ile denendi → `empty process table`, rc=2), bozuk survivor satırı reddi (→ `malformed survivor line`, rc=2), mod biti `100755`, ölü `sub()` yok.
+- **Hiçbir iddia zayıflatılmadı** (AGENTS.md kural 5): diffte silinen tek şey `skip` dalı, yerine gerçek bir `matches` geldi; bir `hasnt` eklendi. Windows'ta sayım 107 passed / 1 skipped — round 2 ile aynı, çünkü eklenen iddia POSIX dalında.
+- **Commit hijyeni temiz**: dokuz commit'in her biri yalnız kendi bulgusunun dosyalarına dokunuyor (`git log --stat 1543720..HEAD`), hepsi Conventional Commits + `[review 0003/F-n]`; handoff commit'i `[review 0003]`.
+- **PB-6**: `scripts/doctor`, `workflows/bootstrap.md`, `.github/workflows/check.yml` bu turun diffinde yok; `doctor --strict` 0 fail.
+
+Round-1'den kalıp round-2'nin dokunmadığı bir şey bulunmadı; F-11 (macOS / pid 1) triyajda noise işaretlenmişti ve `docs/testing.md:83` hâlâ "POSIX" diyor — karar gereği, bulgu değil.
+
+### 3. Plan conformance (R-07) — clean
+
+Round-2 diffinin 7 dosyasının 6'sı planın "Files to change or add" listesinde (`docs/commands.md`, `docs/testing.md`, `scripts/lib/classify-survivors`, `scripts/residue`, `scripts/selftest`, `specs/plans/0003-plan.md`); 7.'si `specs/plans/0003-review.md` ve artık planın onay-sonrası notuyla (`specs/plans/0003-plan.md:6-10`) açıklanmış durumda. Drift yok.
+
+### Findings
+
+#### F-20 — Low — Tests / Correctness
+**F-13'ün sınıflandırıcı yarısı sınanmadan girdi, ve yardımcının kendi arayüzünde aynı sınıfın simetrik hâli hâlâ açık.**
+
+Evidence — (a) `scripts/lib/classify-survivors:44` bu turda değişti (`$2 ~ /^[0-9]+$/` eklendi) ama onu iddia eden hiçbir senaryo yok: `scripts/selftest:188-229`'daki sentetik tabloların hiçbirinde ppid'si sayı olmayan bir **tablo** satırı yok; tek bozuk-satır senaryosu survivor tarafında (`:226-229`). (b) Survivor tarafındaki kontrol hâlâ yalnız `$1`'e bakıyor (`scripts/lib/classify-survivors:45`), yani pid'i rakamla başlayan sarılmış satır yardımcının kendi arayüzünde süreç sanılmaya devam ediyor:
+
+```sh
+printf '4242\tand\t4242 and the rest of a wrapped command line\n' | \
+  sh scripts/lib/classify-survivors posix README.md
+# → counted	4242	4242 and the rest of a wrapped command line   (rc=0)
+```
+
+Impact — `scripts/residue` üzerinden **erişilemez** (ölçüm süzgeci önce davranıyor) ve yön fail-closed, yani yanlış yeşil değil olsa olsa yanlış kırmızı. Ağırlığı iki yerde: (1) dosyanın kendi başlık sözleşmesi (`scripts/lib/classify-survivors:12-14`, "A survivor line whose pid is not a number is not a process… It is refused (exit 2), never guessed at") artık eksik — çünkü F-13 tam olarak "kayıp satır sonu **sayıyla da** başlayabilir" demekti; bu, F-6 ve F-17'de iki kez düzeltilen "yorum ≠ davranış" sınıfının üçüncüsü. (2) Plan adım 1 yardımcının ayrı dosya olma gerekçesini "sınıflandırma mantığı sentetik girdiyle sınanabilsin" diye yazıyor (`specs/plans/0003-plan.md:33-36`); bu turun sınıflandırıcı değişikliği o gerekçeyi kullanmadı.
+
+Recommended action — tek satır + tek senaryo: `scripts/lib/classify-survivors:45`'i `$1 !~ /^[0-9]+$/ || $2 !~ /^[0-9]+$/` yapın (gerçek çağrıda ppid her zaman sayı — bu makinede 380/380 ölçüldü, hiçbir gerçek süreç düşmez), başlık cümlesini "pid'i ya da ppid'si sayı olmayan satır" diye düzeltin, ve `scripts/selftest:226` senaryosuna `"4242${T}and${T}4242 and the rest…"` satırını ekleyin (aynı `exits 2` iddiası kapsar). Alternatif (daha ucuz, savunulabilir): kod değişikliği yok, yalnız başlık cümlesini "residue bu satırları ölçümde süzer; yardımcı yalnız pid alanına bakar" diye dürüstleştirin. Birincisi öneriliyor: iki satır, davranış riski ölçülerek sıfırlandı.
+
+#### F-21 — Low — Tests
+**F-15'in "ölçülemiyor" dalı artık bir iddia taşıyor ama desteklenen iki platformun hiçbirinde koşmuyor; PB-1'in ikinci yarısı pratikte hâlâ kanıtsız.**
+
+Evidence — `scripts/selftest:108-116`:
+```sh
+mem_readable=no
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) mem_readable=yes ;; esac
+[ -r /proc/meminfo ] && mem_readable=yes
+command -v vm_stat >/dev/null 2>&1 && mem_readable=yes
+```
+Windows'ta birinci satır, Linux CI'da ikinci satır her zaman `yes` yapıyor; `else` dalındaki `matches '^note: memory is not measurable on this platform; processes only$'` (`:115`) ne bu makinede ne CI'da (`.github/workflows/check.yml`, `ubuntu-latest`) koşabilir. Bu turda koşan iddia `ok residue: the run line reports memory against the baseline` (selftest çıktısı satır 44); `note:` iddiası hiç görünmüyor.
+
+Impact — Küçük ama planın PB-1 satırı (`specs/plans/0003-plan.md:97`) "belleği okunamayan bir platformda **bunun yerine** `note: …` satırı iddia edilir" diyor; okuyan, o yarının bir yerde koştuğunu sanır. Gerçekte `scripts/residue:82`'nin notu hâlâ yalnız review okumasıyla korunuyor — F-2'nin kapatıldığı sanılan yarısının aynısı, bir seviye yukarı taşınmış hâli. F-15'in asıl derdi (bozulma skip değil kırmızı üretmeli) **çözüldü**; bu yalnız kanıt kaydı meselesi.
+
+İkinci, daha ince nokta aynı satırda: Windows'ta `mem_readable=yes` sabit kabul ediliyor, oysa `scripts/residue:47`'nin `Win32_PerfFormattedData_PerfOS_Memory` sorgusu perf sayaçları bozuk/olmayan bir Windows host'unda boş dönebilir ve betik **doğru** davranıp notu basar; selftest o durumda kırmızı olur. Bu, F-15'in bilinçli tercihi ("ölçüm bozulursa kırmızı") ile PB-1'in "not korunur" güvencesi arasındaki ufak bir aralık; bugün gözlenmedi, aksiyon önerilmiyor, kayıt için yazıldı.
+
+Recommended action — kod değişikliği önerilmiyor. PB-1 satırına yarım cümle: "bu dal desteklenen iki platformda da koşmaz (Windows ve Linux'ta bellek her zaman okunur); varlığı regresyona karşı, kanıtı review okumasıdır" — F-14'te aynı dürüstlükle yapılanın eşi.
+
+#### F-22 — Low — Docs
+**F-12'nin dokümantasyonu doğru ama bir yarısı eksik: spec'in "zararlı" dediği alışkanlığı, onu zararsız kılan tek korumayı yazmadan normalleştiriyor.**
+
+Evidence — `docs/testing.md:99`: *"the answer is a quieter machine, not a wider rule. **On a desktop, expect to rerun.**"* ve `docs/commands.md:114`: *"**Rerun on a quieter machine.**"* Spec'in Intent paragrafı (`specs/active/0003-residue-noise.md:18-20`) ise bu işin varlık sebebini şöyle yazıyor: *"her PR'da 'bir daha koştur' alışkanlığı doğuyor; o alışkanlık, testin yakalamak için var olduğu **gerçek kalıntıyı da görünmez kılar**."*
+
+Impact — İki metin aynı davranışı anlatıyor ama normatif dosya (`docs/testing.md` Resource hygiene, CB-4'ün yazdığı kural) okuyucuya kırmızıyı nasıl ayırt edeceğini söylemeden "yeniden koş" diyor. Oysa ayırt etmek bedava: betik her survivor'ı komut satırıyla adlandırıyor (`scripts/residue:125`) — bu turda bastığı satır `"C:\Program Files\Google\Chrome Beta\Application\chrome.exe" --type=renderer …` idi, bir bakışta check'in olmadığı belli. Koruma cümlesi olmadan kural, spec'in kaldırmak için yazıldığı refleksi yazıya geçirmiş oluyor.
+
+Recommended action — her iki yerde tek yan cümle: "…önce adlandırılan survivor'ın komut satırını okuyun — `uv`/`pytest`/`python` görüyorsanız yeniden koşmak kalıntıyı gizler; tarayıcı/sohbet istemcisi görüyorsanız makine meşguldür." Kod değişikliği yok. (Reviewer'ın kendi notu: "Bunun en savunulabilir 'noise' adayı olduğunu kabul ediyorum: metin yanlış değil, eksik.")
+
+#### F-23 — Info — Docs / Evidence
+**Kalıcı review kaydındaki bir kanıt cümlesi yanlış commit'e işaret ediyor; yazıldığı hâliyle yeniden üretilemez.**
+
+Evidence — `specs/plans/0003-review.md:890-893`: *"F-13'ün düzeltmesi ayrıca zorlanmış-POSIX koşumuyla doğrulandı …: düzeltmeyle `RESIDUE CLEAN`, **`b357515` öncesi residue** ile aynı tablo `survivor 4242 …` + exit 1 veriyor."* Oysa `b357515` planın F-14 notu, yalnız `specs/plans/0003-plan.md`'e dokunuyor ve F-13 düzeltmesinden **sonra** geliyor:
+```sh
+git show --stat --oneline b357515      # → specs/plans/0003-plan.md | 2 +-
+git log --oneline 1543720..HEAD        # 5c098f2 (F-13) en eski, b357515 sondan ikinci
+```
+Yani "b357515 öncesi residue" zaten düzeltilmiş residue'dur ve `RESIDUE CLEAN` verir; cümlenin kastettiği referans `5c098f2^` = `1543720`.
+
+Impact — Yok denecek kadar az, ama bu dosya VERIFY'ın okuyacağı kalıcı kanıt kaydı ve AGENTS.md kural 4 kanıtın kontrol edilebilir olmasını istiyor. Bir sonraki okuyan komutu tekrarlarsa karşıt sonuç alır.
+
+Recommended action — cümledeki `b357515` → `1543720` (ya da `5c098f2^`). Tek sözcük.
+
+#### F-24 — Info — Docs / Evidence
+**PB-5 satırındaki "reviewer da doğrulayamadı" kaydı bu turda eskidi: ad-hoc PowerShell probu round 3'te çalıştı.**
+
+Evidence — `specs/plans/0003-plan.md:101`: *"Üretici ad-hoc PowerShell probunu bu ortamda çalıştıramadı (izin sınıflandırıcısı reddetti); **reviewer da aynı nedenle doğrulayamadı** — VERIFY bunu kanıt tablosuna gözlem olarak yazar."* Bu turda prob çalıştı ve `scripts/residue:49`'un katlama ifadesi sentetik bir girdi üzerinde doğrulandı (yukarıdaki "Çalıştırılan doğrulamalar"): `"prog.exe --a=1`r`n# marker`tand more"` → `prog.exe --a=1 # marker and more`, sonuçta satır sonu/sekme yok. Ayrıca ölçüldü: şu anda bu makinede gömülü satır sonu taşıyan komut satırı yok (0/380), yani round-1'in vahşi gözlemi tekrarlanamadı; `ParentProcessId`'si sayı olmayan süreç de yok (0/380).
+
+Impact — Yok; kanıtın niteliği hakkında. Katlama ifadesinin **kendisi** artık ölçülmüş durumda; sınanmayan şey yalnızca ifadenin `measure()` içinde uçtan uca doğru yerde durduğu (bu, gerçek koşumla kanıtlanıyor — iki residue koşumu tablo üretti).
+
+Recommended action — VERIFY kanıt tablosuna bu iki ölçüm yazılsın; istenirse PB-5 satırındaki "reviewer da aynı nedenle doğrulayamadı" ifadesi "round 3'te ifade sentetik girdiyle doğrulandı, uçtan uca kanıt hâlâ gerçek koşum" diye güncellensin. Dosya listesi ve kapsam değişmez.
+
+### Gözlem (bulgu değil, talimat gereği)
+
+`./scripts/residue` ve `./scripts/residue --fast` bu turda **ikisi de ilk denemede kırmızı** bitti; her ikisinde de tek survivor ölçüm penceresinde doğan bir tarayıcı renderer'ıydı:
+
+```
+after run 1: 375 processes, 1 survivor(s), 0 ignored; 40923 MB available (-188 MB vs baseline)
+  survivor  34760  "C:\Program Files\Google\Chrome Beta\Application\chrome.exe" --type=renderer … --renderer-client-id=1820 …
+RESIDUE FOUND (full): stop what survived inside the step that starts it
+```
+(fast profilinde pid 42924, aynı aile.) Bu, `docs/testing.md:95-99`'un yeni yazdığı ve F-12'nin belgelediği durum; ölçütün fail-closed tarafı, kusur değil. Sayısal kayıt olarak: round 2'de 4 koşumun 2'si, bu turda 2 koşumun 2'si kırmızı. F-12c'yi (ölçütü check'in pid alt ağacıyla genişletmek) ayrı bir CR'a bırakma kararı için insana veri olsun diye yazıldı — kendi başına bir bulgu olarak **sunulmuyor**.
+
+Ayrıca `ignored` listesi bu turda hiç dolmadı (`0 ignored`), yani gerçek koşum yine "ignore" yolunu çalıştırmadı — round 1'deki aynı sınırlama duruyor: CLEAN/FOUND sonucu ölçütün doğruluğunu değil regresyonsuzluğu gösteriyor; ölçütün kanıtı sentetik senaryolar.
+
+### Dimension özeti
+
+- **Correctness:** clean. F-13 residue tarafında kapandı (ölçülerek), F-12 kod değişikliği istemiyordu. Açık tek şey yardımcının kendi arayüzündeki simetri (F-20), erişilemez ve fail-closed.
+- **Security:** clean. Yeni kod yok sayılabilir; `awk` programları sabit, veri `-v` ve dosya argümanıyla geçiyor, `eval` yok, depoya çıktı yazılmıyor. F-7'nin uyarı cümlesi yerinde duruyor ve bu turda eklenen "üçüncü yanlış" cümlesi onu zayıflatmıyor.
+- **Edge cases:** clean. Boş tablo, bozuk satır, sarılmış satır (iki varyant), soy döngüsü, kendi ebeveyni — hepsi reddediliyor ya da `counted`.
+- **Performance:** clean. Eklenen iş süzgece bir alan karşılaştırması; full profil ~70 s, round 1-2 ile aynı mertebe.
+- **Tests:** F-20, F-21. Sayım 107 passed / 0 failed / 1 skipped; hiçbir iddia zayıflatılmadı, bir `hasnt` eklendi, bir `skip` gerçek iddiaya dönüştü.
+- **Maintainability:** F-20'nin (1) numaralı yarısı (başlık yorumu). F-17 ile iki yer düzeldi, ölü kod yok, katman ihlali yok.
+- **Plan conformance:** clean (R-07 ihlali yok).
+- **Docs:** F-22, F-23, F-24 — hepsi düşük/bilgi; CB-4'ün "doküman ve betik aynı şeyi söyler" iddiası tutuyor.
+
+### Verdict (reviewer)
+
+Fix round 2, round 2'nin sekiz real bulgusunun **beşini tam** (F-12 kapsamdaki hâliyle, F-16, F-17, F-18, F-19), **ikisini özünde** (F-13, F-15) ve **birini kayıt olarak** (F-14) kapatmış. **Regresyon yok** — en riskli değişiklik olan daha sıkı ppid süzgeci bu makinede 380 süreç üzerinde ölçülerek elendi. Yeni bulguların hepsi Low/Info ve hiçbiri kodun davranışını bugün bozmuyor: ikisi kanıt kaydı (F-21, F-23/F-24), biri yarım kalan savunma katmanı + yanlış anlatan yorum (F-20), biri doküman tonu (F-22).
+
+Reviewer'ın okumasıyla bu değişiklik seti **gönderilebilir durumda**; F-20 (iki satır + bir senaryo) ve F-23 (tek sözcük) kapatılması öneriliyor, F-21/F-22/F-24 ise VERIFY'ın kanıt tablosunda da halledilebilir.
+
+**STOP — segment burada bitiyor.**
+Next: TRIAGE — insan (real / noise / investigate); "investigate" çıkan olursa R-05 ile QA'ya minimal yeniden üretim için gider, doğrudan düzeltmeye değil.
