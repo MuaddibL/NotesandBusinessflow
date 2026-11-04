@@ -91,7 +91,11 @@ zaman vardır: `docs/design/` (bkz. oradaki `README.md`).
    through a service or COM activation descends from the service control manager even when
    check is what triggered it, and is ignored. Nothing check runs here activates a long-lived
    COM object; both costs are accepted knowingly, not overlooked.
-   Memory still reads best on an otherwise idle machine.
+   Memory still reads best on an otherwise idle machine, and so does the process half: an
+   application of yours that starts a child while the test measures — a browser tab, a chat
+   client — descends from no OS root, so it is counted and the run goes red although check never
+   started it. That is the criterion erring closed, which is the side to err on; the answer is a
+   quieter machine, not a wider rule. On a desktop, expect to rerun.
    Rerun it whenever `scripts/check.conf` changes.
 3. Warm-process caches trade memory for speed for humans who build rarely; with an agent, trade the
    seconds back for a flat memory profile.
