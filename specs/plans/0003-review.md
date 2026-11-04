@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0003-plan.md`
 - Round 1: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
 - Diff: `git diff main..HEAD` on `feature/0003-residue-noise`, 7 commit, 9 dosya
-- Status: findings recorded, **awaiting triage (human)**
+- Status: triyaj tamam (MuaddibL, 2026-11-04) — 10 real, 1 noise; fix round 1 başladı
 
 Bulgular aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
 Triyaj (real / noise / investigate) insana aittir ve bu dosyaya triyaj tablosu olarak eklenir.
@@ -435,16 +435,33 @@ R-05 ile QA'ya minimal yeniden üretim için gider, doğrudan düzeltmeye değil
 
 ## Triage — round 1
 
+Triyaj: MuaddibL, 2026-11-04. 10 real, 1 noise, 0 investigate — hiçbiri `investigate` değil, çünkü
+her bulgu ya yeniden üretim komutuyla ya da doğrudan `grep`/`git ls-files` çıktısıyla geldi;
+R-05'e gidecek belirsiz bir gözlem kalmadı.
+
 | # | Severity | Dimension | Verdict | Karar / gerekçe |
 |---|---|---|---|---|
-| F-1 | Medium | Correctness | — | *awaiting triage* |
-| F-2 | Medium | Tests | — | *awaiting triage* |
-| F-3 | Medium-low | Correctness | — | *awaiting triage* |
-| F-4 | Low | Tests | — | *awaiting triage* |
-| F-5 | Low | Tests | — | *awaiting triage* |
-| F-6 | Low | Maintainability | — | *awaiting triage* |
-| F-7 | Low | Security | — | *awaiting triage* |
-| F-8 | Low | Docs | — | *awaiting triage* |
-| F-9 | Low | Tests | — | *awaiting triage* |
-| F-10 | Low | Maintainability | — | *awaiting triage* |
-| F-11 | Info | Portability | — | *awaiting triage* |
+| F-1 | Medium | Correctness | **real** | Yeniden üretildi; hayalet satır koşumu kırmızıya çeviriyor. Ölçüm satır bazında güvenli hâle gelir: sayısal pid süzgeci (her iki dal) + classifier'da sayısal olmayan pid reddi + sentetik bozuk satır senaryosu. |
+| F-2 | Medium | Tests | **real** | Harita var olmayan bir teste işaret ediyor — AGENTS.md kural 4. Deterministik yarısı test edilir (`… MB vs baseline` biçimi, `ANEW_RESIDUE_MB=x → 2`), edilemeyen yarısı için harita satırı dürüstçe düzeltilir. |
+| F-3 | Medium-low | Correctness | **real** | Fail-open, dosyanın kendi başlık yorumunun yasakladığı biçim. Bugün `residue` üzerinden erişilemez ama yardımcının kendi arayüzü var. `-r` → `-s` + senaryo. |
+| F-4 | Low | Tests | **real** | Senaryo, davranış bozukken (toplu dipnot) geçer — CB-2'nin ayırt etmek için var olduğu durum. Satır bazlı `matches`. |
+| F-5 | Low | Tests | **real** | Aynı sınıf; doğru desen hemen üstteki senaryoda zaten var. |
+| F-6 | Low | Maintainability | **real** | Ölü `sub()` + onu yanlış anlatan yorum. Reviewer'ın ikinci seçeneği: satırı ve yorumu sil, davranış değişmez. |
+| F-7 | Low | Security | **real** | Çıktı PB-5 gereği PR'a gidiyor ve SID/kullanıcı adı taşıyor. Kırpma **değil** — kırpmak teşhisi bozar; `docs/commands.md`'ye tek cümlelik uyarı. |
+| F-8 | Low | Docs | **real** | pid yeniden kullanımı yazılıyken aynı sınıftan ikinci kör noktayı yazmamak tutarsız. Kod değişikliği yok, `docs/testing.md` rule 2'ye tek cümle. |
+| F-9 | Low | Tests | **real** | "101 passed, 0 failed" Windows'ta kapsamı olduğundan geniş gösteriyor. `skipped` sayacı + özet satırı. |
+| F-10 | Low | Maintainability | **real** | Shebang'i ve usage'ı olan dosya POSIX'te çalıştırılamıyor; `scripts/` altındaki tek istisna. |
+| F-11 | Info | Portability | **noise** | Reviewer'ın kendisi "bulgu değil" diyor; macOS spec'in "Out of scope" listesinde. Aksiyon yok. |
+
+### Triyajdan çıkan, bulgu olmayan iki kayıt
+- **R-5'in kanıtı**: reviewer `backgroundTaskHost.exe`/`updater.exe` gözlemini kendi turunda yeniden
+  üretemedi (o süreçler çalışmıyordu), ölçütü 215 süreç üzerinden dolaylı doğruladı. Planın R-5
+  satırına kanıtın tek seferlik gözlem olduğu not düşülür.
+- **Dosya listesinin onaydan sonra genişlemesi** (`fa160ec`): planın onay satırının altına tarihli
+  bir not. İzlenebilirlik, kusur değil.
+
+### Fix round 1 — sıra
+F-1 → F-3 → F-6 (kod) → F-2 → F-4 → F-5 → F-9 (testler) → F-7 → F-8 (dokümanlar) → F-10 (mod biti).
+Her real bulgu kendi commit'inde, `[review 0003/F-n]` referansıyla; her commit sonrası
+`./scripts/check --fast`, tur sonunda tam yeşil + `scripts/selftest` + iki residue profili
+(`prompts/build.md` §fixes). Sonra fix diff'i yeniden REVIEW'a gider.
