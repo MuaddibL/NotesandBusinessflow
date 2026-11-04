@@ -1112,11 +1112,14 @@ Residue:
 | `./scripts/residue` (full) | `RESIDUE CLEAN (full, 2 runs)` — ilk denemede; `0 survivor(s), 4 ignored` |
 | `./scripts/residue --fast` | `RESIDUE CLEAN (fast, 2 runs)` — ilk denemede; `0 survivor(s), 0 ignored` |
 
-Bu turda full profil **ignore yolunu gerçekten çalıştırdı**: dört OS servisi (iki
+Bu turda full profil **ignore yolunu bir kez gerçekten çalıştırdı**: dört OS servisi (iki
 `backgroundTaskHost.exe`, `RuntimeBroker.exe`, `svchost.exe`) `(OS service)` gerekçesiyle
-listelendi ve sonucu belirlemedi. Round 1 ve round 3 review'larının "gerçek koşum ignore yolunu
-hiç çalıştırmadı" sınırlaması bu koşumla kapandı — ölçütün ignore yarısı artık yalnız sentetik
-senaryolarla değil, bir gerçek ölçümle de görülmüş durumda.
+listelendi ve sonucu belirlemedi. Bu, round 1 ve round 3 review'larının "gerçek koşum ignore
+yolunu hiç çalıştırmadı" sınırlamasının ilk karşı örneği — ama **talep üzerine yeniden
+üretilemiyor**: review round 4 aynı makinede, aynı commit'te üç ölçüm yaptı ve üçünde de
+`0 ignored` gördü (review 0003/F-27). Ignore yolu ancak ölçüm penceresinde doğup settle'ı atlatan
+bir OS-servis soyu varsa dolar; ölçütün o yarısının deterministik kanıtı hâlâ sentetik
+senaryolardır. VERIFY kanıt tablosuna iki koşum da yazılır.
 
 **Sıradaki: REVIEW round 4** — fix diff'i (`ae9ac65..HEAD`) bağımsız incelemeye gider.
 
