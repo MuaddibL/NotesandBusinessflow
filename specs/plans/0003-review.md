@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0003-plan.md`
 - Round 1: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
 - Diff: `git diff main..HEAD` on `feature/0003-residue-noise`, 7 commit, 9 dosya
-- Status: round 2 triyajı tamam (8 real) — fix round 2 başladı
+- Status: fix round 2 tamam (8 real düzeltildi) — REVIEW round 3 bekliyor
 
 Bulgular aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
 Triyaj (real / noise / investigate) insana aittir ve bu dosyaya triyaj tablosu olarak eklenir.
@@ -856,3 +856,40 @@ F-13 (kod) → F-15 (test) → F-17 → F-12a → F-18 → F-19 (dokümanlar) �
 Her real bulgu kendi commit'inde, `[review 0003/F-n]` referansıyla; her commit sonrası
 `./scripts/check --fast`, tur sonunda tam yeşil + `scripts/selftest` + iki residue profili — bu kez
 kırmızı koşumlar da kayda geçer (F-12b). Sonra fix diff'i yeniden REVIEW'a gider.
+
+### Fix round 2 — sonuç (2026-11-04)
+
+| # | Commit | Ne değişti |
+|---|---|---|
+| F-13 | `5c098f2` | Süzgeç ppid'nin de sayı olmasını arıyor (`scripts/residue`), sınıflandırıcı ebeveyn haritasını aynı kuralla kuruyor; sahte tabloya rakamla başlayan ikinci sarılmış satır + `hasnt` |
+| F-15 | `b0ea784` | Bellek dalını platform seçiyor (sınanan çıktı değil); "ölçülemiyor" dalında skip yerine `note: memory is not measurable…` iddiası; PB-1 satırı güncellendi |
+| F-17 | `a946876` | `skip()` yorumu ve `docs/commands.md`: "platform **ya da çalışma alanı**" |
+| F-12 | `520b033` | `docs/testing.md` rule 2 + `docs/commands.md`: süreç yarısı da boşta makine ister; ölçüm penceresinde doğan yabancı çocuk bilinçli olarak sayılır, cevabı daha sessiz makine — kural genişletmek değil. **Kod değişikliği yok** (F-12c ayrı CR'a bırakıldı) |
+| F-18 | `523a79d` | Ölçümün kendi WMI host'u da aynı affın içinde — yarım cümle |
+| F-19 | `33d085f` | exit 2'nin iki yeni anlamı hem betik başlığında hem `docs/commands.md`'de |
+| F-14 | `b357515` | PB-5 satırı: Windows katlamasının sentetik testi yok, kanıt gerçek koşum; ad-hoc PowerShell probunun bu ortamda hem üretici hem reviewer tarafından çalıştırılamadığı kayda geçti |
+| F-16 | `7dc81a3` | Onay sonrası notu: review raporu REVIEW segmentinin çıktısı, plan dosya listesine ait değil |
+
+Doğrulama (tur bitiminde, bu makinede): `./scripts/check` → `CHECK GREEN (full, 6 steps, 8 s)` ·
+`./scripts/doctor --strict` → `0 fail, 0 warn` · `./scripts/selftest` → `107 passed, 0 failed, 1 skipped`.
+
+Residue — **kırmızı koşumlar dâhil** (F-12b):
+
+| Koşum | Sonuç |
+|---|---|
+| `./scripts/residue` (1) | `RESIDUE FOUND (full)` — 1 survivor: Chrome Beta renderer, `after run 2: 378 processes, 1 survivor(s), 2 ignored` |
+| `./scripts/residue` (2) | `RESIDUE FOUND (full)` — 1 survivor: yine bir Chrome Beta renderer |
+| `./scripts/residue --fast` | `RESIDUE CLEAN (fast, 2 runs)` — ilk denemede |
+| `./scripts/residue` (3) | `RESIDUE CLEAN (full, 2 runs)` |
+
+İki kırmızı koşumun ikisinde de tek survivor, ölçüm sırasında tarayıcının başlattığı bir renderer'dı
+— F-12'nin tam olarak belgelediği durum, ölçütün doğru (fail-closed) davranışı. Bu tablo spec'in
+PB-5 kanıtına ve PR açıklamasına bu hâliyle girer: "CLEAN" makinenin o anki durumudur, betiğin
+özelliği değil.
+
+F-13'ün düzeltmesi ayrıca zorlanmış-POSIX koşumuyla doğrulandı (scratchpad'de sahte `ps` + sahte
+`uname`, depoya dokunmadan): düzeltmeyle `RESIDUE CLEAN`, `b357515` öncesi residue ile aynı tablo
+`survivor  4242  4242 and the rest of a wrapped command line` + exit 1 veriyor. Sızıntı yarısı
+(`FAKEPS_LEAK=1`) hâlâ exit 1 + `survivor  888`.
+
+**Sıradaki: REVIEW round 3** — fix diff'i (`1543720..HEAD`) bağımsız incelemeye gider.
