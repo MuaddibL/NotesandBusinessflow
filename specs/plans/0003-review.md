@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0003-plan.md`
 - Round 1: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
 - Diff: `git diff main..HEAD` on `feature/0003-residue-noise`, 7 commit, 9 dosya
-- Status: triyaj tamam (MuaddibL, 2026-11-04) — 10 real, 1 noise; fix round 1 başladı
+- Status: fix round 1 tamam (10 real düzeltildi, her biri kendi commit'inde) — REVIEW round 2 bekliyor
 
 Bulgular aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
 Triyaj (real / noise / investigate) insana aittir ve bu dosyaya triyaj tablosu olarak eklenir.
@@ -465,3 +465,30 @@ F-1 → F-3 → F-6 (kod) → F-2 → F-4 → F-5 → F-9 (testler) → F-7 → 
 Her real bulgu kendi commit'inde, `[review 0003/F-n]` referansıyla; her commit sonrası
 `./scripts/check --fast`, tur sonunda tam yeşil + `scripts/selftest` + iki residue profili
 (`prompts/build.md` §fixes). Sonra fix diff'i yeniden REVIEW'a gider.
+
+### Fix round 1 — sonuç (2026-11-04)
+
+| # | Commit | Ne değişti |
+|---|---|---|
+| F-1 | `1ee5456` | Ölçüm satır sonlarını/sekmeleri boşluğa katlıyor, yalnız sayısal pid'li satırlar kalıyor (iki platform); sınıflandırıcı bozuk satırı reddediyor (exit 2); fake-`ps` senaryosuna sarılmış komut satırı, sentetik tabloya reddedilen satır eklendi |
+| F-2 | `9d03e0b` | `… MB vs baseline` biçimi iddia ediliyor (bellek ölçülemiyorsa `skip`), `ANEW_RESIDUE_MB=x → 2` senaryosu eklendi; PB-1 harita satırı eşik dalının testi olmadığını yazıyor |
+| F-3 | `ffefb7c` | Boş süreç tablosu reddediliyor (`-s`), senaryosuyla |
+| F-4 | `290d9ba` | `ignored` satırı tek satırlık regex'le çivilendi (iki fake-`ps` senaryosunda da) |
+| F-5 | `764cd73` | `$LEAK` artık `^  survivor  ` başlığının altında aranıyor |
+| F-6 | `8bc4571` | Ölü `sub()` ve yanlış yorum silindi, gerçek davranış yazıldı |
+| F-7 | `d4ac2e2` | `docs/commands.md`: ignored listesi PR'a kısaltılmadan yapıştırılmaz (tam komut satırı, SID) |
+| F-8 | `3295aeb` | `docs/testing.md` rule 2: Windows'ta servis/COM etkinleştirmesi ikinci kör nokta olarak yazıldı |
+| F-9 | `9326494` | `skipped` sayacı + özet satırı + `docs/commands.md` "Stops at" |
+| F-10 | `b3f6cb2` | Çalıştırılabilir bit |
+| F-11 | — | noise, aksiyon yok |
+| kayıt | `0564e99` | R-5'in kanıtı tek seferlik gözlem olarak işaretlendi; onay sonrası dosya listesi değişikliği not edildi |
+
+Doğrulama (bu makinede, fix turu bitiminde): `./scripts/check` → `CHECK GREEN (full, 6 steps, 8 s)` ·
+`./scripts/doctor --strict` → `0 fail, 0 warn` · `./scripts/selftest` → `107 passed, 0 failed, 1 skipped` ·
+`./scripts/residue` → `RESIDUE CLEAN (full, 2 runs)` · `./scripts/residue --fast` → `RESIDUE CLEAN (fast, 2 runs)`.
+Fast profil iki koşumda önce kırmızıydı: tek survivor her ikisinde de ölçüm sırasında tarayıcının
+başlattığı bir Chrome renderer'ıydı — ölçütün doğru davranışı (tarayıcı OS servisi değil), makinenin
+boşta olmaması. Üçüncü koşum temiz.
+
+**Sıradaki: REVIEW round 2** — fix diff'i (`ec4a91c..HEAD`) bağımsız bir incelemeye gider; üretici
+kendi işini doğrulamaz.
