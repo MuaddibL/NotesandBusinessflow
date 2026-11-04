@@ -2,8 +2,9 @@
 # ANEW selftest — proves that scripts/check, scripts/doctor and scripts/residue behave as documented.
 # Every scenario runs in a throwaway copy of this workspace in a temp dir OUTSIDE the repo
 # (docs/testing.md, Evidence policy), asserts on the real output and exit code, and is deleted.
-# Exit 0 = all scenarios pass, exit 1 = at least one failed. A scenario that cannot run on this
-# platform is named and counted as skipped, so a summary never looks wider than the run was.
+# Exit 0 = all scenarios pass, exit 1 = at least one failed. A scenario this platform or this
+# workspace cannot run is named and counted as skipped, so a summary never looks wider than the
+# run was.
 # Runs in CI next to doctor.
 set -u
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -20,7 +21,7 @@ report() { if [ "$1" -eq 0 ]; then passed=$((passed + 1)); echo "ok    $2"
 exits()  { [ "$rc" -eq "$1" ]; report $? "$2 (exit $1)"; }
 has()    { printf '%s\n' "$out" | grep -qF -- "$1"; report $? "$2"; }
 hasnt()  { if printf '%s\n' "$out" | grep -qF -- "$1"; then report 1 "$2"; else report 0 "$2"; fi; }
-skip()   { skipped=$((skipped + 1)); echo "skip  $1"; }   # a scenario that cannot run on this platform
+skip()   { skipped=$((skipped + 1)); echo "skip  $1"; }   # a scenario this platform or workspace cannot run
 
 # --- scripts/check: a bare copy of the script with a conf per scenario ---
 C="$TMP/check"

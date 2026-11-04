@@ -115,8 +115,8 @@ Mode is the `Mode:` line in `AGENTS.md`, set at bootstrap (`workflows/README.md`
 - **When to use it:** after changing any ANEW script; CI runs it after doctor.
 - **Reads / writes:** copies the ANEW core into a temp dir outside the repo; writes nothing in the repo.
 - **Stops at:** `== selftest: <n> passed, <m> failed, <k> skipped ==` (exit 1 on any failure). A
-  skipped scenario is one this platform cannot run (the POSIX measurement on Windows, for
-  instance); it is named on its own line.
+  skipped scenario is one this platform or this workspace cannot run (the POSIX measurement on
+  Windows; the adapter checks in a repo without `adapters/`); it is named on its own line.
 - **Lite / Strict:** no difference.
 - **Refusal:** none.
 - **Common mistake:** editing a script and the selftest together to make it pass — a red selftest
