@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0003-plan.md`
 - Round 1: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
 - Diff: `git diff main..HEAD` on `feature/0003-residue-noise`, 7 commit, 9 dosya
-- Status: REVIEW round 3 tamam (5 yeni bulgu: F-20..F-24) — triyaj bekliyor
+- Status: round 3 triyajı tamam (5 real) — fix round 3 sürüyor
 
 Bulgular aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
 Triyaj (real / noise / investigate) insana aittir ve bu dosyaya triyaj tablosu olarak eklenir.
@@ -1065,3 +1065,19 @@ Reviewer'ın okumasıyla bu değişiklik seti **gönderilebilir durumda**; F-20 
 
 **STOP — segment burada bitiyor.**
 Next: TRIAGE — insan (real / noise / investigate); "investigate" çıkan olursa R-05 ile QA'ya minimal yeniden üretim için gider, doğrudan düzeltmeye değil.
+
+### Triyaj — round 3, 2026-11-04 (insan: MuaddibL)
+
+**5 real · 0 noise · 0 investigate.** Hiçbir bulgu reddedilmedi.
+
+| # | Verdict | Karar gerekçesi |
+|---|---|---|
+| F-20 | **real** | Reviewer'ın A seçeneği uygulanır (koşul + başlık cümlesi + senaryo). Davranış riski ölçülerek sıfırlandı (bu makinede 380/380 süreçte ppid sayı); dosyanın kendi başlık sözleşmesi şu an yanlış söylüyor ve bu "yorum ≠ davranış" sınıfının üçüncü örneği (F-6, F-17'den sonra). |
+| F-21 | **real** | Yalnız plan PB-1 satırına yarım cümle, kod değişikliği yok. Kanıt kaydı: o dalın desteklenen iki platformda da koşmadığı yazılmazsa okuyan koştuğunu sanar. |
+| F-22 | **real** | Reviewer bunu "en savunulabilir noise adayı" diye işaretledi; yine de real: spec'in Intent paragrafı bu işin var olma sebebini "bir daha koştur" refleksi diye yazıyor, normatif doküman ayırt etme yolunu söylemeden o refleksi öğretemez. İki dosyaya birer yan cümle. |
+| F-23 | **real** | Tek sözcük. Kanıt kaydı yanlış commit'e işaret ediyor ve yazıldığı hâliyle karşıt sonuç veriyor; VERIFY'ın okuyacağı dosyada yanlış bırakılmaz (AGENTS.md kural 4). |
+| F-24 | **real** | PB-5'teki "reviewer da aynı nedenle doğrulayamadı" artık doğru değil. Düzeltme kayıt niteliğinde; kapsam ve dosya listesi değişmez. |
+
+Kapsam sınırı değişmedi: **F-12c** (ölçütü check'in pid alt ağacıyla genişletmek) hâlâ bu spec'in dışında, ayrı bir CR'a ait. Fix round 3 yalnız yukarıdaki beş bulguya dokunur.
+
+Fix round limiti: bu üçüncü fix turu, `workflows/feature-development.md:25`'in sınırı içinde (> 3 olsaydı R-06).
