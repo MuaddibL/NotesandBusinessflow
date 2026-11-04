@@ -111,6 +111,8 @@ case "$(uname -s)" in
 n=$(cat "$FAKEPS_CALLS" 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" > "$FAKEPS_CALLS"
 printf '%s\n' "    1     0 /sbin/init" "    2     0 [kthreadd]" "  100     1 /bin/sh scripts/check"
 [ "$n" -ge 3 ] && printf '%s\n' "  777     2 [kworker/R-selftest]"
+# A command line that wraps: text where a pid belongs. Not a process, must not become a survivor.
+[ "$n" -ge 3 ] && printf '%s\n' "  and a second line of the previous command"
 [ "$n" -ge 3 ] && [ -n "${FAKEPS_LEAK:-}" ] && printf '%s\n' "  888     1 python -m pytest (orphaned by check)"
 exit 0
 FAKEPS
@@ -125,6 +127,7 @@ FAKEPS
     has "[kworker/R-selftest]" "residue: an ignored survivor is still named"
     has "(kernel thread)" "residue: each ignored survivor carries its own reason"
     matches 'after run 2: [0-9]+ processes, 0 survivor\(s\), 1 ignored' "residue: the kernel thread is counted as ignored, not as a survivor"
+    hasnt "a second line of the previous command" "residue: a wrapped command line is not a process"
     # The other half: ignoring the kernel thread must not swallow a real survivor next to it.
     : > "$TMP/fakeps/calls"
     run env PATH="$TMP/fakeps:$PATH" FAKEPS_CALLS="$TMP/fakeps/calls" FAKEPS_LEAK=1 \
@@ -186,6 +189,12 @@ has "ignored${T}OS service${T}20908"   "windows: a service's grandchild is too"
 has "ignored${T}system process${T}300" "windows: a child of System is the system's"
 has "counted${T}16168"                 "windows: a process of check's own counts"
 has "counted${T}31000"                 "windows: ancestry that cannot be walked counts (fail closed)"
+
+# A survivor line whose pid is not a number is not a process: the measurement lost a line break.
+printf '%s\n' "16168${T}25300${T}python.exe -m pytest" "and the rest of a wrapped command line" > "$C/survivors"
+classify "$C/survivors" windows "$C/table"
+exits 2 "classify: a survivor line whose pid is not a number"
+has "malformed survivor line" "classify: names the line it refuses"
 
 # --- scripts/doctor: a git-initialised copy of the ANEW core only, reset between scenarios ---
 # Only what doctor reads: no application code, and no real specs or plans (a project's own specs

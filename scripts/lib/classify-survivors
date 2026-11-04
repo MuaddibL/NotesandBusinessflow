@@ -9,6 +9,9 @@
 # Both the table and the survivors are TAB-separated "pid<TAB>ppid<TAB>command" lines; the table
 # is every live process, the survivors are the subset being judged. One line per survivor comes
 # out: "counted<TAB>pid<TAB>command" or "ignored<TAB>reason<TAB>pid<TAB>command".
+# A survivor line whose pid is not a number is not a process: the caller's measurement lost a line
+# break. It is refused (exit 2), never guessed at — counting it would name a text fragment as
+# residue, and ignoring it would hide a real one.
 #
 # A survivor is ignored only when its ancestry reaches a root check cannot start under:
 #   posix    pid 2 (kthreadd) — kernel threads. NEVER pid 1: an orphaned process of check's own
@@ -34,7 +37,11 @@ awk -F'\t' -v os="$os" '
     sub(/^.*[\\\/]/, "", s)                     # drop the directory
     return s
   }
-  NR == FNR { ppid[$1] = $2; cmd[$1] = $3; next }
+  NR == FNR { if ($1 ~ /^[0-9]+$/) { ppid[$1] = $2; cmd[$1] = $3 }; next }
+  $1 !~ /^[0-9]+$/ {                            # not a process: the caller lost a line break
+    print "classify-survivors: malformed survivor line (pid is not a number): " $0 > "/dev/stderr"
+    bad = 1; next
+  }
   {
     reason = ""; q = $1
     for (i = 0; i < 64; i++) {
@@ -52,4 +59,5 @@ awk -F'\t' -v os="$os" '
     if (reason == "") print "counted\t" $1 "\t" $3
     else print "ignored\t" reason "\t" $1 "\t" $3
   }
+  END { if (bad) exit 2 }
 ' "$table" -

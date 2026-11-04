@@ -45,7 +45,7 @@ measure() {
       $stub = ($all | Where-Object { $_.ProcessId -eq $me }).ParentProcessId
       "MEM`t" + (Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory).AvailableMBytes
       $all | Where-Object { $_.ProcessId -ne $me -and $_.ProcessId -ne $stub -and $_.ParentProcessId -ne $me } |
-        ForEach-Object { "{0}`t{1}`t{2}" -f $_.ProcessId, $_.ParentProcessId, $(if ($_.CommandLine) { $_.CommandLine.Trim() } else { $_.Name }) }
+        ForEach-Object { "{0}`t{1}`t{2}" -f $_.ProcessId, $_.ParentProcessId, $(if ($_.CommandLine) { (($_.CommandLine -split "[`r`n`t]+") -join " ").Trim() } else { $_.Name }) }
     ' </dev/null 2>/dev/null | tr -d '\r' > "$TMP/raw" || return 1
     mem=$(awk -F'\t' '$1 == "MEM" { print $2 }' "$TMP/raw")
     grep -v '^MEM	' "$TMP/raw" > "$1"
@@ -61,6 +61,10 @@ measure() {
            if ($0 !~ /^ps -e -o pid= -o ppid= -o args=/) print pid "\t" parent "\t" $0 }' \
       "$TMP/raw" > "$1"
   fi
+  # Defence in depth: only well-formed "pid<TAB>…" lines reach the comparison. A command line
+  # carrying an embedded newline or tab would otherwise put text where a pid belongs, and a text
+  # fragment is not a process — it would be counted as a survivor and turn the run red.
+  awk -F'\t' '$1 ~ /^[0-9]+$/' "$1" > "$TMP/rows" && mv "$TMP/rows" "$1"
   case "$mem" in *[!0-9]*) mem= ;; esac
   [ -s "$1" ]
 }
