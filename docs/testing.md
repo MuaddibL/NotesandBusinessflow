@@ -87,7 +87,11 @@ zaman vardır: `docs/design/` (bkz. oradaki `README.md`).
    such a root: an orphaned process of check's own is reparented to it. The ancestry is read
    after the fact, so a recycled pid can in principle place a survivor under an OS root; the
    window is seconds, and the alternative — counting every passing system process — is what made
-   this test unreliable. Memory still reads best on an otherwise idle machine.
+   this test unreliable. The same blindness has a second form on Windows: a process started
+   through a service or COM activation descends from the service control manager even when
+   check is what triggered it, and is ignored. Nothing check runs here activates a long-lived
+   COM object; both costs are accepted knowingly, not overlooked.
+   Memory still reads best on an otherwise idle machine.
    Rerun it whenever `scripts/check.conf` changes.
 3. Warm-process caches trade memory for speed for humans who build rarely; with an agent, trade the
    seconds back for a flat memory profile.
