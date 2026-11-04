@@ -102,10 +102,16 @@ else report 1 "the survivor is named with its command line"; fi
 matches '^after run 1: [0-9]+ processes, [0-9]+ survivor\(s\), [0-9]+ ignored([;]|$)' "residue: the summary says what was counted and what was ignored"
 # The memory half of the run line: its shape, never its value — the value is the machine's. The
 # over-tolerance branch cannot be forced deterministically, so it has no test (plan, PB-1 row).
-if printf '%s\n' "$out" | grep -q 'memory is not measurable'; then
-  skip "residue: memory line (not measurable on this platform)"
-else
+# Which half to assert is decided by the platform, not by the output under test: a measurement
+# that breaks must turn this red, not quietly pick the other branch.
+mem_readable=no
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) mem_readable=yes ;; esac
+[ -r /proc/meminfo ] && mem_readable=yes
+command -v vm_stat >/dev/null 2>&1 && mem_readable=yes
+if [ "$mem_readable" = yes ]; then
   matches 'MB available \(-?[0-9]+ MB vs baseline\)' "residue: the run line reports memory against the baseline"
+else
+  matches '^note: memory is not measurable on this platform; processes only$' "residue: a platform without a memory reading says so and keeps going"
 fi
 env ANEW_RESIDUE_SETTLE=x sh "$C/scripts/residue" >/dev/null 2>&1; rc=$?; out=
 exits 2 "residue: a settle time that is not a number"
