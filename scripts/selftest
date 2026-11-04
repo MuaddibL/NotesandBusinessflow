@@ -234,6 +234,15 @@ classify "$C/survivors" windows "$C/table"
 exits 2 "classify: a survivor line whose ppid is not a number"
 has "pid or ppid is not a number" "classify: says which field left the line malformed"
 
+# The process table is read by the same rule. Were this wrapped line kept as a row, pid 77 would
+# lose its kernel-thread parent and be counted instead of ignored.
+printf '%s\n' "1${T}0${T}/sbin/init" "2${T}0${T}[kthreadd]" \
+  "77${T}2${T}[kworker/R-mlx5_cmd]" "77${T}and${T}the wrapped tail of the previous line" > "$C/table"
+printf '%s\n' "77${T}2${T}[kworker/R-mlx5_cmd]" > "$C/survivors"
+classify "$C/survivors" posix "$C/table"
+exits 0 "classify: a wrapped table line"
+has "ignored${T}kernel thread${T}77" "classify: a wrapped table line does not steal a pid's parent"
+
 # --- scripts/doctor: a git-initialised copy of the ANEW core only, reset between scenarios ---
 # Only what doctor reads: no application code, and no real specs or plans (a project's own specs
 # would collide with the scenarios) — so the selftest behaves the same in the template and in
