@@ -93,8 +93,17 @@ residue
 exits 1 "residue: leaked process";               has "RESIDUE FOUND (full)" "leak is reported"
 has "$LEAK" "the survivor is named with its command line"
 matches '^after run 1: [0-9]+ processes, [0-9]+ survivor\(s\), [0-9]+ ignored([;]|$)' "residue: the summary says what was counted and what was ignored"
+# The memory half of the run line: its shape, never its value — the value is the machine's. The
+# over-tolerance branch cannot be forced deterministically, so it has no test (plan, PB-1 row).
+if printf '%s\n' "$out" | grep -q 'memory is not measurable'; then
+  echo "skip  residue: memory line (not measurable on this platform)"
+else
+  matches 'MB available \(-?[0-9]+ MB vs baseline\)' "residue: the run line reports memory against the baseline"
+fi
 env ANEW_RESIDUE_SETTLE=x sh "$C/scripts/residue" >/dev/null 2>&1; rc=$?; out=
 exits 2 "residue: a settle time that is not a number"
+env ANEW_RESIDUE_MB=x sh "$C/scripts/residue" >/dev/null 2>&1; rc=$?; out=
+exits 2 "residue: a memory tolerance that is not a number"
 
 # A survivor check cannot have started must not decide the result — the regression this whole
 # change exists for (spec 0003). Forced deterministically with a ps on PATH that reports a fixed
