@@ -64,7 +64,7 @@ measure() {
   # Defence in depth: only well-formed "pid<TAB>…" lines reach the comparison. A command line
   # carrying an embedded newline or tab would otherwise put text where a pid belongs, and a text
   # fragment is not a process — it would be counted as a survivor and turn the run red.
-  awk -F'\t' '$1 ~ /^[0-9]+$/' "$1" > "$TMP/rows" && mv "$TMP/rows" "$1"
+  awk -F'\t' '$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/' "$1" > "$TMP/rows" && mv "$TMP/rows" "$1"
   case "$mem" in *[!0-9]*) mem= ;; esac
   [ -s "$1" ]
 }

@@ -127,8 +127,10 @@ case "$(uname -s)" in
 n=$(cat "$FAKEPS_CALLS" 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" > "$FAKEPS_CALLS"
 printf '%s\n' "    1     0 /sbin/init" "    2     0 [kthreadd]" "  100     1 /bin/sh scripts/check"
 [ "$n" -ge 3 ] && printf '%s\n' "  777     2 [kworker/R-selftest]"
-# A command line that wraps: text where a pid belongs. Not a process, must not become a survivor.
+# Two command lines that wrap: text where a pid belongs. The second starts with a number, so
+# only the ppid field gives it away. Neither is a process; neither may become a survivor.
 [ "$n" -ge 3 ] && printf '%s\n' "  and a second line of the previous command"
+[ "$n" -ge 3 ] && printf '%s\n' "  4242 and the rest of a wrapped command line"
 [ "$n" -ge 3 ] && [ -n "${FAKEPS_LEAK:-}" ] && printf '%s\n' "  888     1 python -m pytest (orphaned by check)"
 exit 0
 FAKEPS
@@ -146,6 +148,7 @@ FAKEPS
     matches '^ +777 +\[kworker/R-selftest\] +\(kernel thread\)$' "residue: an ignored survivor is named on its own line, with its own reason"
     matches 'after run 2: [0-9]+ processes, 0 survivor\(s\), 1 ignored' "residue: the kernel thread is counted as ignored, not as a survivor"
     hasnt "a second line of the previous command" "residue: a wrapped command line is not a process"
+    hasnt "the rest of a wrapped command line" "residue: a wrapped line is not a process even when it starts with a number"
     # The other half: ignoring the kernel thread must not swallow a real survivor next to it.
     : > "$TMP/fakeps/calls"
     run env PATH="$TMP/fakeps:$PATH" FAKEPS_CALLS="$TMP/fakeps/calls" FAKEPS_LEAK=1 \
