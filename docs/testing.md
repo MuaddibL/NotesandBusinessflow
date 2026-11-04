@@ -89,8 +89,9 @@ zaman vardır: `docs/design/` (bkz. oradaki `README.md`).
    window is seconds, and the alternative — counting every passing system process — is what made
    this test unreliable. The same blindness has a second form on Windows: a process started
    through a service or COM activation descends from the service control manager even when
-   check is what triggered it, and is ignored. Nothing check runs here activates a long-lived
-   COM object; both costs are accepted knowingly, not overlooked.
+   check is what triggered it, and is ignored — the WMI host the measurement itself activates
+   included. Nothing check runs here activates a long-lived COM object; both costs are accepted
+   knowingly, not overlooked.
    Memory still reads best on an otherwise idle machine, and so does the process half: an
    application of yours that starts a child while the test measures — a browser tab, a chat
    client — descends from no OS root, so it is counted and the run goes red although check never
