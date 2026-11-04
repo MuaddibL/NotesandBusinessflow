@@ -111,8 +111,9 @@ Mode is the `Mode:` line in `AGENTS.md`, set at bootstrap (`workflows/README.md`
   machine SID; shorten it to the lines that matter. A third: reading a red run on a busy desktop
   as a defect. A child your browser or chat client starts while the test measures descends from
   no OS root, so it is counted — deliberately, because nothing distinguishes it from check's own
-  by ancestry. Rerun on a quieter machine. Memory still reads best on an otherwise idle
-  machine.
+  by ancestry. Read the survivor's command line first: `uv`, `pytest` or `python` means a rerun
+  would hide real residue; a browser or a chat client means the machine was busy. Rerun on a
+  quieter machine. Memory still reads best on an otherwise idle machine.
 
 ### `scripts/selftest`
 - **What it does:** proves that `scripts/check`, `scripts/doctor` and `scripts/residue` behave as

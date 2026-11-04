@@ -96,7 +96,9 @@ zaman vardır: `docs/design/` (bkz. oradaki `README.md`).
    application of yours that starts a child while the test measures — a browser tab, a chat
    client — descends from no OS root, so it is counted and the run goes red although check never
    started it. That is the criterion erring closed, which is the side to err on; the answer is a
-   quieter machine, not a wider rule. On a desktop, expect to rerun.
+   quieter machine, not a wider rule. Read the survivor the run names before you rerun: `uv`,
+   `pytest` or `python` in that command line means a rerun would hide residue; a browser or a
+   chat client means the machine was busy. On a desktop, expect to rerun.
    Rerun it whenever `scripts/check.conf` changes.
 3. Warm-process caches trade memory for speed for humans who build rarely; with an agent, trade the
    seconds back for a flat memory profile.
