@@ -31,10 +31,11 @@ esac
 [ -s "$table" ] || { echo "classify-survivors: empty process table: $table" >&2; exit 2; }
 
 awk -F'\t' -v os="$os" '
-  # The executable part of a Windows command line, lowercased and without its directory.
+  # The executable part of a Windows command line, lowercased and without its directory. A quoted
+  # path with spaces in it is cut at the first space; services.exe always lives in system32, so
+  # the SCM is still recognised.
   function image(c,   s) {
     s = tolower(c)
-    sub(/^"[^"]*"/, "&", s)                     # a quoted path keeps its spaces
     gsub(/"/, "", s)
     sub(/[ \t].*$/, "", s)                      # drop the arguments
     sub(/^.*[\\\/]/, "", s)                     # drop the directory
