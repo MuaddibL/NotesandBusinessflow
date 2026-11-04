@@ -228,6 +228,12 @@ classify "$C/survivors" windows "$C/table"
 exits 2 "classify: a survivor line whose pid is not a number"
 has "malformed survivor line" "classify: names the line it refuses"
 
+# The pid field alone does not settle it: a wrapped line can start with a digit of its own.
+printf '%s\n' "16168${T}25300${T}python.exe -m pytest" "4242${T}and${T}4242 and the rest of it" > "$C/survivors"
+classify "$C/survivors" windows "$C/table"
+exits 2 "classify: a survivor line whose ppid is not a number"
+has "pid or ppid is not a number" "classify: says which field left the line malformed"
+
 # --- scripts/doctor: a git-initialised copy of the ANEW core only, reset between scenarios ---
 # Only what doctor reads: no application code, and no real specs or plans (a project's own specs
 # would collide with the scenarios) — so the selftest behaves the same in the template and in
