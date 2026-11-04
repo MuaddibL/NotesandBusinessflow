@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0003-plan.md`
 - Round 1: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
 - Diff: `git diff main..HEAD` on `feature/0003-residue-noise`, 7 commit, 9 dosya
-- Status: round 4 triyajı tamam (3 real; R-06 insan kararıyla aşıldı) — fix round 4 sürüyor
+- Status: fix round 4 tamam (3 real düzeltildi) — REVIEW round 5 bekliyor
 
 Bulgular aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
 Triyaj (real / noise / investigate) insana aittir ve bu dosyaya triyaj tablosu olarak eklenir.
@@ -1415,3 +1415,45 @@ Bu dördüncü fix turu, `workflows/feature-development.md:25` gereği R-06'yı
 Bu karar VERIFY'ın okuyacağı kayıttır: R-06 atlanmadı, **tartılıp insan tarafından aşıldı**.
 
 Kapsam sınırı değişmedi: **F-12c** hâlâ bu spec'in dışında, ayrı bir CR'a ait.
+
+### Fix round 4 — sonuç (2026-11-04)
+
+| # | Commit | Ne değişti |
+|---|---|---|
+| F-25 | `cb0db39` | `docs/testing.md` ve `docs/commands.md`: ayrım artık jeton listesine değil `scripts/check.conf` envanterine bağlı ("bir adım ya da onun çocuğu — bugün uv, ruff, mypy, pytest"); ikinci dal "sizin açıklayabildiğiniz uygulama" diye sınırlandı; ikiliği kapatan fail-closed varsayılan yazıldı ("ikisi de değilse check'in say"). Kod değişikliği yok |
+| F-26 | `53679c6` | `scripts/selftest`: tablo-tarafı süzgeci için senaryo — canlı bir pid'i tekrar eden sarılmış tablo satırı, satır kabul edilseydi o pid'in ebeveynini de alırdı (77 kthreadd'yi kaybeder, `ignored` yerine `counted` olurdu) |
+| F-27 | `38cbc12` | Fix round 3 kaydı niteliklendirildi: ignore yolu **bir kez** gözlendi, talep üzerine yeniden üretilemiyor (review round 4 aynı makinede üç ölçümde `0 ignored`); deterministik kanıt hâlâ sentetik senaryolar |
+
+Doğrulama (tur bitiminde, bu makinede): `./scripts/check` → `CHECK GREEN (full, 6 steps, 9 s)` ·
+`./scripts/doctor --strict` → `0 fail, 0 warn` · `./scripts/selftest` → `111 passed, 0 failed, 1 skipped`
+(109 → 111: F-26'nın iki yeni iddiası, adlarıyla yeşil).
+
+F-26'nın senaryosu regresyonu gerçekten yakalıyor; scratchpad'de tablo-tarafı süzgeci gevşetilmiş
+bir kopya ile iki yönlü gösterildi (depoya dokunulmadı):
+
+```
+sh scripts/lib/classify-survivors posix <tablo> < <survivor>   → ignored  kernel thread  77
+sh <süzgeci gevşetilmiş kopya>          posix <tablo> < <survivor>   → counted  77
+```
+
+Residue — **kırmızı koşumlar dâhil** (F-12b):
+
+| Koşum | Sonuç |
+|---|---|
+| `./scripts/residue` (full, 1) | `RESIDUE FOUND (full)` — 1 survivor: Chrome Beta renderer (pid 19560, `--renderer-client-id=2006`) |
+| `./scripts/residue --fast` (1) | `RESIDUE FOUND (fast)` — 1 survivor: Chrome Beta renderer (pid 35052, `…=2007`) |
+| `./scripts/residue --fast` (2) | `RESIDUE FOUND (fast)` — 1 survivor: Chrome Beta renderer (pid 36316, `…=2008`) |
+| `./scripts/residue` (full, 2) | `RESIDUE CLEAN (full, 2 runs)` — `0 survivor(s)`, `RuntimeBroker.exe` ignore edildi |
+| `./scripts/residue --fast` (3) | `RESIDUE CLEAN (fast, 2 runs)` — `0 survivor(s), 0 ignored` |
+
+Üç ardışık kırmızının üçü de aynı aileydi ve `renderer-client-id` sayacı 2006 → 2007 → 2008 diye
+ilerliyordu: tarayıcı ölçüm penceresinde durmadan renderer doğuruyordu, yani makine gerçekten
+meşguldü. Bu tur, F-25'in yeni yazdığı ayrımın ilk kullanımı oldu — survivor'ın komut satırı
+`scripts/check.conf` adımlarından biri ya da onların çocuğu değil, açıklanabilir bir uygulama;
+dolayısıyla cevap yeniden koşmaktı, kural genişletmek değil. İki profil de sonradan ilk denemede
+temiz bitti.
+
+Not: full profilin temiz koşumunda ignore yolu yine doldu (`RuntimeBroker.exe`, OS service) —
+F-27'nin yazdığı gibi bu bir kez daha gözlem, deterministik kanıt değil.
+
+**Sıradaki: REVIEW round 5** — fix diff'i (`59252b7..HEAD`) bağımsız incelemeye gider.
