@@ -101,6 +101,8 @@ Mode is the `Mode:` line in `AGENTS.md`, set at bootstrap (`workflows/README.md`
   split, kept separate so `scripts/selftest` can feed it synthetic process tables); writes only a
   temp dir, deleted on exit.
 - **Stops at:** `RESIDUE CLEAN (<profile>, 2 runs)` (exit 0) or `RESIDUE FOUND (<profile>)` (exit 1).
+  Exit 2 is a usage error, or a measurement it refuses to draw a conclusion from
+  (`residue: cannot list processes on this platform`, `residue: cannot classify survivors`).
 - **Lite / Strict:** no difference.
 - **Refusal:** a red check stops it: `RESIDUE TEST ABORTED (<profile>): check failed in run <n> — the residue test needs a green check`.
 - **Common mistake:** reading the ignored list as a failure — it is there to be auditable, not to

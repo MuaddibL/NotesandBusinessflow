@@ -4,11 +4,12 @@
 # each run compares against the baseline taken before the first.
 #   ./scripts/residue          full profile (the one bootstrap reports at its gate)
 #   ./scripts/residue --fast   the fast profile (bootstrap runs both)
-# Exit 0 = clean, 1 = residue found or check red, 2 = usage. A new process counts as a survivor
-# only if it is still alive at a second look one settle period later, so short-lived background
-# activity drops out. What is left is split by scripts/lib/classify-survivors: processes check
-# could have started decide the exit code, processes it could not (kernel threads, OS services)
-# are listed under their own heading and do not. An ancestry that cannot be walked counts.
+# Exit 0 = clean, 1 = residue found or check red, 2 = usage, or a measurement it will not draw a
+# conclusion from. A new process counts as a survivor only if it is still alive at a second look
+# one settle period later, so short-lived background activity drops out. What is left is split by
+# scripts/lib/classify-survivors: processes check could have started decide the exit code,
+# processes it could not (kernel threads, OS services) are listed under their own heading and do
+# not. An ancestry that cannot be walked counts.
 # Tunables: ANEW_RESIDUE_SETTLE (seconds to wait after each run, default 5),
 #           ANEW_RESIDUE_MB (memory tolerance in MB, default 512).
 set -u
