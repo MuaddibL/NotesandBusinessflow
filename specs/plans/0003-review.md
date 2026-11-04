@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0003-plan.md`
 - Round 1: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
 - Diff: `git diff main..HEAD` on `feature/0003-residue-noise`, 7 commit, 9 dosya
-- Status: REVIEW round 4 tamam (3 yeni bulgu: F-25..F-27) — triyaj bekliyor
+- Status: round 4 triyajı tamam (3 real; R-06 insan kararıyla aşıldı) — fix round 4 sürüyor
 
 Bulgular aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
 Triyaj (real / noise / investigate) insana aittir ve bu dosyaya triyaj tablosu olarak eklenir.
@@ -1383,3 +1383,32 @@ söyleyebilirim; bu tercih edilirse review kaydına R-06'nın tartıldığı ve 
 **STOP — segment burada bitiyor.**
 Next: TRIAGE — insan (real / noise / investigate); "investigate" çıkan olursa R-05 ile QA'ya
 minimal yeniden üretim için gider, doğrudan düzeltmeye değil.
+
+### Triyaj — round 4, 2026-11-04 (insan: MuaddibL)
+
+**3 real · 0 noise · 0 investigate.** Hiçbir bulgu reddedilmedi.
+
+| # | Verdict | Karar gerekçesi |
+|---|---|---|
+| F-25 | **real** | Reviewer'ın üç parçalı önerisi uygulanır: ilk dal jeton listesi yerine `scripts/check.conf` envanterine bağlanır, ikinci dal "sizin açıklayabildiğiniz uygulama" diye sınırlanır, ikiliği kapatan fail-closed varsayılan yazılır. Ağırlık nedeni: `docs/testing.md` ANEW şablonuyla başka depolara gidiyor; check'i tarayıcı başlatan bir projede cümle yanlış yönlendirir. Kod değişikliği yok. |
+| F-26 | **real**, reviewer'ın **(a)** seçeneğiyle | Reviewer (b)'yi (kaydet, düzeltme) yeni tur açılmasın diye önermişti; tur F-25 için zaten açıldığından (a) tercih edildi: POSIX sentetik tablosuna ppid'si sayı olmayan tek satır, mevcut iddialar değişmeden. Davranış riski yok ve planın 1. adımının yardımcıyı ayrı dosya yapma gerekçesi (`specs/plans/0003-plan.md:33-36`) nihayet bu satır için de kullanılır. |
+| F-27 | **real** | Fix round 3 kaydı tek bir gözlemle "sınırlama kapandı" diyor; reviewer aynı makinede üç ölçümde ignore yolunu göremedi. Cümle niteliklendirilir ve reviewer'ın koşumları da kayda girer. Tek cümle, kod yok. |
+
+#### R-06 kararı (insan)
+
+Bu dördüncü fix turu, `workflows/feature-development.md:25` gereği R-06'yı
+(`prompts/recovery/fix-loop-limit.md`) tetikliyor. Konu triyajda açıkça tartıldı:
+
+- Reviewer, kök nedenin spec'te ya da planda olmadığını, turlar arası işin hep "yeni yazılan cümle
+  yarım kaldı" sınıfında kaldığını (F-6 → F-17 → F-18 → F-22 → F-25) söyleyip dördüncü tur
+  açılmamasını önerdi.
+- Üretici, bir recovery rampasının sonucunu önceden söyleyip rampayı atlamanın kapıların engellemek
+  için var olduğu kısa yol olduğunu söyleyerek R-06 analizinin koşulmasını önerdi.
+- **İnsanın kararı: R-06 analizi koşulmadan fix round 4'e geçilir.** Gerekçe kayıt altında: bu turun
+  üç bulgusunun hiçbiri kod değişikliği gerektirmiyor (iki doküman cümlesi, bir selftest tablo
+  satırı, bir kayıt düzeltmesi), yani R-06'nın koruduğu şey — "kök neden koddaysa kodu daha fazla
+  yamamak" — bu turda zaten söz konusu değil.
+
+Bu karar VERIFY'ın okuyacağı kayıttır: R-06 atlanmadı, **tartılıp insan tarafından aşıldı**.
+
+Kapsam sınırı değişmedi: **F-12c** hâlâ bu spec'in dışında, ayrı bir CR'a ait.
