@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0003-plan.md`
 - Round 1: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
 - Diff: `git diff main..HEAD` on `feature/0003-residue-noise`, 7 commit, 9 dosya
-- Status: round 3 triyajı tamam (5 real) — fix round 3 sürüyor
+- Status: fix round 3 tamam (5 real düzeltildi) — REVIEW round 4 bekliyor
 
 Bulgular aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
 Triyaj (real / noise / investigate) insana aittir ve bu dosyaya triyaj tablosu olarak eklenir.
@@ -1081,3 +1081,41 @@ Next: TRIAGE — insan (real / noise / investigate); "investigate" çıkan olurs
 Kapsam sınırı değişmedi: **F-12c** (ölçütü check'in pid alt ağacıyla genişletmek) hâlâ bu spec'in dışında, ayrı bir CR'a ait. Fix round 3 yalnız yukarıdaki beş bulguya dokunur.
 
 Fix round limiti: bu üçüncü fix turu, `workflows/feature-development.md:25`'in sınırı içinde (> 3 olsaydı R-06).
+
+### Fix round 3 — sonuç (2026-11-04)
+
+| # | Commit | Ne değişti |
+|---|---|---|
+| F-20 | `8409977` | `classify-survivors` survivor süzgeci ppid'yi de arıyor (`$1 !~ … \|\| $2 !~ …`), hata mesajı hangi alanın bozuk olduğunu söylüyor, başlık sözleşmesi düzeltildi; `scripts/selftest`'e rakamla başlayan sarılmış satır senaryosu + mesaj iddiası |
+| F-21 | `ca22ebd` | PB-1: `note:` dalı desteklenen iki platformun hiçbirinde koşmuyor, varlığı regresyona karşı, kanıtı review okuması. Kod değişikliği yok |
+| F-22 | `7546af4` | `docs/testing.md` ve `docs/commands.md`: yeniden koşmadan önce adlandırılan survivor'ın komut satırı okunur — `uv`/`pytest`/`python` kalıntıyı gizler, tarayıcı/sohbet istemcisi makinenin meşguliyetidir |
+| F-23 | `5c01801` | Zorlanmış-POSIX kanıt cümlesi `b357515` yerine `1543720` (= `5c098f2^`) diyor; yazıldığı hâliyle yeniden üretilebilir |
+| F-24 | `ca50640` | PB-5: prob round 3'te koştu, katlama ifadesi sentetik girdiyle doğrulandı; "otomatik testi yok" iddiası daraltıldı, sınanmayan şey ifadenin `measure()` içindeki yeri |
+
+Doğrulama (tur bitiminde, bu makinede): `./scripts/check` → `CHECK GREEN (full, 6 steps, 8 s)` ·
+`./scripts/doctor --strict` → `0 fail, 0 warn` · `./scripts/selftest` → `109 passed, 0 failed, 1 skipped`
+(107 → 109: F-20'nin iki yeni iddiası, adlarıyla yeşil).
+
+F-20'nin davranışı reviewer'ın verdiği repro ile iki yönlü doğrulandı:
+
+```
+printf '4242\tand\t4242 and the rest of a wrapped command line\n' | sh scripts/lib/classify-survivors posix README.md
+# önce: counted  4242  …   rc=0
+# sonra: classify-survivors: malformed survivor line (pid or ppid is not a number): …   rc=2
+printf '55\t40\tuv run pytest\n' | …   → counted  55  uv run pytest   rc=0   (gerçek survivor hâlâ sınıflanıyor)
+```
+
+Residue:
+
+| Koşum | Sonuç |
+|---|---|
+| `./scripts/residue` (full) | `RESIDUE CLEAN (full, 2 runs)` — ilk denemede; `0 survivor(s), 4 ignored` |
+| `./scripts/residue --fast` | `RESIDUE CLEAN (fast, 2 runs)` — ilk denemede; `0 survivor(s), 0 ignored` |
+
+Bu turda full profil **ignore yolunu gerçekten çalıştırdı**: dört OS servisi (iki
+`backgroundTaskHost.exe`, `RuntimeBroker.exe`, `svchost.exe`) `(OS service)` gerekçesiyle
+listelendi ve sonucu belirlemedi. Round 1 ve round 3 review'larının "gerçek koşum ignore yolunu
+hiç çalıştırmadı" sınırlaması bu koşumla kapandı — ölçütün ignore yarısı artık yalnız sentetik
+senaryolarla değil, bir gerçek ölçümle de görülmüş durumda.
+
+**Sıradaki: REVIEW round 4** — fix diff'i (`ae9ac65..HEAD`) bağımsız incelemeye gider.
