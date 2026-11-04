@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0003-plan.md`
 - Round 1: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
 - Diff: `git diff main..HEAD` on `feature/0003-residue-noise`, 7 commit, 9 dosya
-- Status: fix round 4 tamam (3 real düzeltildi) — REVIEW round 5 bekliyor
+- Status: REVIEW round 5 tamam (1 yeni bulgu: F-28, Info) — triyaj bekliyor
 
 Bulgular aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
 Triyaj (real / noise / investigate) insana aittir ve bu dosyaya triyaj tablosu olarak eklenir.
@@ -1457,3 +1457,168 @@ Not: full profilin temiz koşumunda ignore yolu yine doldu (`RuntimeBroker.exe`,
 F-27'nin yazdığı gibi bu bir kez daha gözlem, deterministik kanıt değil.
 
 **Sıradaki: REVIEW round 5** — fix diff'i (`59252b7..HEAD`) bağımsız incelemeye gider.
+
+---
+
+## REVIEW round 5 — 2026-11-04
+
+- Round 5: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
+- Diff: `git diff 59252b7..HEAD` — 4 dosya, 97+/11−, 4 commit (fix round 4)
+- Üretim kodu bu turda değişmedi: `scripts/residue` ve `scripts/lib/classify-survivors` diffte yok
+- Kapsam notu: F-12c hâlâ kapsam dışı, ayrı CR
+
+Rapor aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
+
+### Çalıştırılan doğrulamalar (reviewer, bu makinede, Windows/MINGW)
+
+| Komut | Sonuç |
+|---|---|
+| `./scripts/check` | `CHECK GREEN (full, 6 steps, 8 s)` — exit 0 |
+| `./scripts/doctor --strict` | `== result: 0 fail, 0 warn ==` — exit 0 |
+| `./scripts/selftest` | `== selftest: 111 passed, 0 failed, 1 skipped ==` — exit 0 |
+| `./scripts/selftest` (ad doğrulaması) | `ok classify: a wrapped table line (exit 0)` ve `ok classify: a wrapped table line does not steal a pid's parent` — **ikisi de adıyla yeşil** |
+| F-26 iki yönlü repro (scratchpad'de, depo dışında) | orijinal → `ignored<TAB>kernel thread<TAB>77`; tablo süzgeci gevşetilmiş kopya → `counted<TAB>77` |
+| `./scripts/residue --fast` | `RESIDUE CLEAN (fast, 2 runs)` — ilk denemede; `0 survivor(s), 1 ignored` (`25120 svchost.exe (OS service)`) |
+| `./scripts/residue` (full, 1) | `RESIDUE FOUND (full)` — 1 survivor: Chrome Beta renderer (`--renderer-client-id=2021`); run 1 ve 2'de `1 ignored` |
+| `./scripts/residue` (full, 2) | `RESIDUE FOUND (full)` — 1 survivor: Chrome Beta renderer (`--renderer-client-id=2022`); run 2'de `1 ignored` (`36948 SearchProtocolHost.exe (OS service)`) |
+| `git status --porcelain` | boş |
+
+Üreticinin üç sayısal iddiasının üçü de **birebir doğrulandı**: `111 passed / 0 failed / 1 skipped`,
+iki yeni iddia adlarıyla yeşil, ve F-26 senaryosunun tablo-tarafı süzgecini gerçekten kısıtladığı.
+Sonuncusu üreticinin sözüne güvenilmeden bağımsız üretildi: `scripts/lib/classify-survivors`'ın bir
+kopyasında 45. satırın koşulu `$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/` → `$1 ~ /^[0-9]+$/` diye
+gevşetildiğinde aynı tablo + aynı survivor `counted 77` veriyor, yani senaryo yeşilden kırmızıya
+dönüyor (depodaki dosyaya dokunulmadı).
+
+### 1. Round-4 bulgularının kapanış durumu
+
+| # | Durum | Kanıt |
+|---|---|---|
+| **F-25** | **tam kapandı** — triyajın onayladığı üç parçalı biçimde | `docs/testing.md:99-103` ve `docs/commands.md:114-116`. (1) İlk dal jeton listesi yerine envantere bağlı: *"a step of `scripts/check.conf` or a child of one — here uv, ruff, mypy, pytest"* — `scripts/check.conf:3`'ün kendi envanter cümlesiyle birebir aynı dört araç, `scripts/check.conf:8-18`'deki adımlarla tutarlı. (2) İkinci dal sahiplenmeyle sınırlı: *"an application of your own you can account for"*. (3) Fail-closed varsayılan yazılı: *"Neither? Count it as check's: the criterion already errs that way."* Eski jeton listesinin depoda başka kopyası kalmamış |
+| **F-26** | **tam kapandı** — ucuz (b) yerine (a) seçilmiş ve seçim işe yaramış | `scripts/selftest:237-244`. Senaryo süzgeci **gerçekten** kısıtlıyor: tablo canlı bir pid'i (77) tekrar eden, ppid'si sayı olmayan sarılmış bir satır taşıyor; süzgeç o satırı eleyince `ppid[77]=2` korunuyor → `ignored kernel thread 77`, süzgeç gevşetilince `ppid[77]="and"` → soy bir adımda kopuyor → `counted 77`. İki yönlü olarak depo dışında üretildi. `scripts/lib/classify-survivors:45`'in F-13 ile gelen ikinci yarısı artık bir iddiaya bağlı |
+| **F-27** | **tam kapandı** (bir sayı hariç → F-28) | `specs/plans/0003-review.md:1115-1122`: kayıt silinmedi, niteliklendirildi — "ignore yolunu **bir kez** gerçekten çalıştırdı … **talep üzerine yeniden üretilemiyor** … deterministik kanıt hâlâ sentetik senaryolar". Bu, planın R-5 notundaki tek-seferlik-gözlem kayıt deseninin eşi |
+
+F-26'nın (a) biçimi hakkında bir yan not (bulgu değil): tablo süzgecinin **`$1`** yarısı hâlâ
+iddiasız, ama o yarının gözlenebilir bir davranışı yok — `$1`'i sayı olmayan bir tablo satırının
+anahtarı hiçbir gerçek pid ile çakışamaz, dolayısıyla sınanacak bir fark üretmiyor. Kapanış bu
+yüzden "tam".
+
+### 2. Regresyon taraması — regresyon bulunmadı
+
+- **Yeniden yazılan rule 2 ile rule 1 çelişmiyor** — F-25'in işaret ettiği sürtüşme kapandı. Rule 1
+  (`docs/testing.md:71-77`) check'in bırakabileceklerinin arasında *"browsers, the application under
+  test"*'i sayıyor; yeni rule 2 cümlesinde tarayıcı artık otomatik olarak "makine meşguldü" dalına
+  düşmüyor. Dalların sırası da doğru tarafta: check'in başlattığı bir E2E tarayıcısı birinci dalda
+  yakalanıyor.
+- **Rule 2 ile `scripts/residue`'nun gerçek çıktısı çelişmiyor.** Komut satırı okunamadığında yalnız
+  imaj adının basılması (`scripts/residue:49`) yeni cümleyi **zayıflatmıyor**, tersine güçlendiriyor:
+  çıplak `python.exe` artık envanter listesine uymadığı için fail-closed varsayılana düşüyor ve doğru
+  cevabı veriyor — eski jeton listesinde `ruff.exe`/`mypy.exe` hiçbir dala uymuyordu.
+- **Spec ile çelişki yok.** CB-4'ün "rule 1 ve rule 2 birbiriyle ve betikle aynı şeyi söyler" iddiası
+  bu turda daha iyi tutuyor.
+- **Yeni senaryo hiçbir iddiayı zayıflatmıyor ya da tekrarlamıyor** (AGENTS.md kural 5):
+  `scripts/selftest`'te **0 silinen satır**, 9 eklenen; `skip` eklenmedi, eşik/regex gevşetilmedi.
+  Aranan metin (`ignored<TAB>kernel thread<TAB>77`) `:197` ile aynı olsa da fixture ve test adı
+  farklı, ve `:197` tablo-tarafı süzgecini kısıtlamıyor — yani tekrar değil, yeni kısıt.
+- **Fixture sızıntısı yok:** yeni senaryo `$C/table` ve `$C/survivors`'ı üzerine yazıyor, ama bu
+  dosyalar 242. satırdan sonra bir daha kullanılmıyor; sonraki blok kendi `$W` fixture'ını kuruyor.
+- **Commit hijyeni temiz:** her commit yalnız kendi bulgusunun dosyalarına dokunuyor, hepsi
+  Conventional Commits + `[review 0003/F-n]`, handoff commit'i `[review 0003]`.
+- **PB-6:** `scripts/doctor`, `scripts/residue`, `scripts/lib/classify-survivors`,
+  `workflows/bootstrap.md`, `.github/workflows/check.yml` bu turun diffinde yok; `doctor --strict`
+  0 fail. `README.md:204` ve CI'ın `residue` yorumu ölçütü anlatıyor, jeton listesini değil.
+- **Önceki turlardan kalan açık iş yok.** Round 1–3'ün tüm real bulguları kapalı; bilinçli açık
+  bırakılanlar kayıtlı ve yerinde: F-11 noise, F-12c ayrı CR, F-2/F-21 ve F-14/F-24 sınırları plan
+  satırlarında.
+
+### 3. Plan conformance (R-07) — clean
+
+Bu turun dört dosyasının üçü planın listesinde (`docs/commands.md`, `docs/testing.md`,
+`scripts/selftest`); dördüncüsü `specs/plans/0003-review.md`, planın onay sonrası notuyla
+(`specs/plans/0003-plan.md:6-10`, F-16) açıklanmış durumda. Dal genelinde
+`git diff --name-only main..HEAD` = 10 dosya = planın 9'u + açıklanmış review raporu. Drift yok.
+
+### Findings
+
+#### F-28 — Info — Evidence record
+**F-27'nin düzelttiği cümlede review round 4'ün koşum sayısı yanlış yazılmış: "üç ölçüm" denen şey
+aynı dosyada dört koşum / iki çağrı olarak kayıtlı.**
+
+Evidence —
+- `specs/plans/0003-review.md:1119-1120`: *"review round 4 aynı makinede, aynı commit'te **üç ölçüm**
+  yaptı ve üçünde de `0 ignored` gördü"*.
+- Aynı dosyanın round-4 doğrulama tablosu `:1145-1146`: `./scripts/residue --fast` → *"her iki
+  koşumda `0 survivor(s), 0 ignored`"* (2 koşum, 1 çağrı) ve `./scripts/residue` (full) → `0 ignored`
+  (1 çağrı); round-4 gözlem bloğu `:1320-1323` full profilin **iki** koşumunu da `0 ignored` diye
+  gösteriyor. Toplam: **2 çağrı / 4 koşum**, hepsi `0 ignored` — "üç" iki okumanın da karşılığı değil.
+  Sayı F-27'nin kendi başlık cümlesinden (`:1288`) kopyalanmış; bulgunun Evidence bloğu
+  (`:1292-1294`) zaten dört veri noktası sayıyor.
+
+Reproduce — `sed -n '1119,1120p;1145,1146p;1320,1323p' specs/plans/0003-review.md`
+
+Impact — Yok denecek kadar az ve yön olarak zararsız (dördü de `0 ignored`; doğru sayı iddiayı
+zayıflatmıyor, güçlendiriyor). Önemi yalnız kaydın niteliğinde: F-27'nin tüm meselesi VERIFY'ın
+okuyacağı kanıt kaydının sayılabilir olmasıydı, ve aynı cümlede sayılamayan bir sayı duruyor
+(AGENTS.md kural 4). Kod, test ve davranış etkilenmiyor.
+
+Recommended action — **Bunun için beşinci bir fix turu açılmasın.** F-27'nin kendi önerisi bu kaydın
+VERIFY kanıt tablosuna yazılmasıydı; sayı orada düzeltilsin: "review round 4: 2 çağrı / 4 koşum,
+hepsinde `0 ignored`". VERIFY tablosuna aynı anda bu turun (review round 5) ölçümleri de girsin,
+çünkü ters yönde veri taşıyorlar: bu turda ignore yolu **3 çağrının 3'ünde de doldu** (fast:
+`1 ignored`, svchost.exe; full-1: her iki koşumda `1 ignored`; full-2: run 2'de `1 ignored`,
+SearchProtocolHost.exe). Yani "bir kez gözlendi" ifadesi de artık dar — kaydın doğru hâli "gözlem
+makinenin o anki durumuna bağlı; deterministik kanıt sentetik senaryolar" (bu cümle `:1121-1122`'de
+zaten doğru yazılmış ve değişmesi gerekmiyor). Alternatif olarak (daha ucuz, savunulabilir): hiçbir
+şey yapılmasın ve VERIFY sayıyı kendi tablosunda doğrudan koşum kayıtlarından türetsin — bu durumda
+`:1119`'daki "üç" yanlış kalır, bu yüzden **birincisi öneriliyor**.
+
+### Gözlemler (bulgu değil, talimat gereği)
+
+1. **`./scripts/residue` (full) bu turda iki denemede de kırmızı bitti.** Her ikisinde tek survivor,
+   ölçüm penceresinde doğan bir tarayıcı renderer'ıydı:
+   ```
+   survivor  36644  "C:\Program Files\Google\Chrome Beta\Application\chrome.exe" --type=renderer … --renderer-client-id=2021 … /prefetch:9
+   survivor  39356  "C:\Program Files\Google\Chrome Beta\Application\chrome.exe" --type=renderer … --renderer-client-id=2022 …
+   ```
+   `renderer-client-id` üreticinin turundaki 2006 → 2007 → 2008 dizisini 2021 → 2022 diye sürdürüyor.
+   `docs/testing.md:95-103`'ün yazdığı fail-closed davranış; kusur değil, **bulgu olarak
+   sunulmuyor**. F-25'in yeni cümlesi bu survivor'da ikinci kez doğru çalıştı. `--fast` aynı turda
+   ilk denemede temiz.
+2. **Ignore yolu bu turda üç çağrının üçünde de doldu** (`svchost.exe`, `SearchProtocolHost.exe`),
+   round 4'ün 0/2'sinin tersine — F-28'in önerdiği kayıt düzeltmesinin girdisi.
+3. **F-26 fixture'ının satır sırası sessiz bir varsayım taşıyor** (`scripts/selftest:239-240`): bozuk
+   satır iyi satırdan **sonra** geldiği için regresyonu yakalıyor; sıra ters çevrilirse iyi satır
+   kötüsünü ezer ve senaryo gevşetilmiş süzgeçle de yeşil kalır. Üstteki yorum niyeti açıkça
+   yazdığı için aksiyon önerilmiyor; kayda geçsin diye not edildi.
+
+### Dimension özeti
+
+- **Correctness:** clean. Üretim kodu değişmedi; doküman cümlesi ile betiğin davranışı arasında bu
+  turda sürtüşme bulunmadı.
+- **Plan conformance:** clean (R-07 ihlali yok).
+- **Security:** clean. Kod yok; F-7'nin SID/kullanıcı adı uyarısı yerinde ve yeni cümleyle zayıflamıyor.
+- **Edge cases:** clean. Yeni senaryo tam da bir sınır durumu ekliyor.
+- **Performance:** n/a — ölçülecek değişiklik yok.
+- **Tests:** clean. 109 → 111, iki yeni iddia adıyla yeşil, **hiçbir iddia silinmedi/atlanmadı/
+  gevşetilmedi**; yeni iddia davranış iddia ediyor, yalnız çıkış kodu değil.
+- **Maintainability:** clean. Senaryo kardeşlerinin yanında, fixture sızdırmıyor, yorum niyeti anlatıyor.
+- **Docs:** clean. F-25 ile rule 1 ↔ rule 2 sürtüşmesi kapandı; F-28 yalnız kayıt sayısı.
+
+### Verdict (reviewer)
+
+Fix round 4, round 4'ün **üç real bulgusunun üçünü de tam kapattı**: F-25 önerilen üç parçalı
+biçimde, F-26 ucuz (b) yerine (a) ile — ve seçimin bedeli boşa gitmemiş, senaryo süzgeci gerçekten
+kısıtlıyor (bağımsız iki yönlü repro), F-27 kaydı silmeden niteliklendirerek. **Regresyon yok**, plan
+drifti yok, üretim kodu hiç değişmedi, üreticinin üç sayısal iddiasının üçü de doğrulandı. Tek yeni
+bulgu Info sınıfında bir sayı hatası (F-28) ve onun yeri fix turu değil, VERIFY'ın kanıt tablosu.
+
+**Beşinci bir fix turu gerekmiyor ve önerilmiyor.** Dördüncü tur zaten
+`workflows/feature-development.md:25`'in sınırının dışındaydı ve insan R-06'yı tartıp aşmıştı; o
+karar yeniden açılmıyor. Yerine öneri: F-28 **real** triyaj edilip **VERIFY'ın kanıt tablosuna**
+bağlansın (düzeltme orada doğal olarak yapılır, ayrı bir fix commit'i gerektirmez), ve bu değişiklik
+seti VERIFY'a geçsin. Reviewer'ın okumasıyla **gönderilebilir durumda**; VERIFY'ın bakması gereken
+açık kalemler kayıtlı ve kapsam dışı olanlar işaretli.
+
+**STOP — segment burada bitiyor.**
+Next: TRIAGE — insan (real / noise / investigate); "investigate" çıkarsa R-05 ile QA'ya minimal
+yeniden üretim için gider, doğrudan düzeltmeye değil. Triyaj sonrası: VERIFY — QA.
