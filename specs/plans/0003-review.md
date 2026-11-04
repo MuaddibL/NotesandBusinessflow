@@ -888,9 +888,9 @@ PB-5 kanıtına ve PR açıklamasına bu hâliyle girer: "CLEAN" makinenin o ank
 özelliği değil.
 
 F-13'ün düzeltmesi ayrıca zorlanmış-POSIX koşumuyla doğrulandı (scratchpad'de sahte `ps` + sahte
-`uname`, depoya dokunmadan): düzeltmeyle `RESIDUE CLEAN`, `b357515` öncesi residue ile aynı tablo
-`survivor  4242  4242 and the rest of a wrapped command line` + exit 1 veriyor. Sızıntı yarısı
-(`FAKEPS_LEAK=1`) hâlâ exit 1 + `survivor  888`.
+`uname`, depoya dokunmadan): düzeltmeyle `RESIDUE CLEAN`, `1543720` (= `5c098f2^`) öncesi
+residue ile aynı tablo `survivor  4242  4242 and the rest of a wrapped command line` + exit 1
+veriyor. Sızıntı yarısı (`FAKEPS_LEAK=1`) hâlâ exit 1 + `survivor  888`.
 
 **Sıradaki: REVIEW round 3** — fix diff'i (`1543720..HEAD`) bağımsız incelemeye gider.
 
