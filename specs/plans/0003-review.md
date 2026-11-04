@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0003-plan.md`
 - Round 1: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
 - Diff: `git diff main..HEAD` on `feature/0003-residue-noise`, 7 commit, 9 dosya
-- Status: REVIEW round 2 tamam — 8 yeni bulgu (F-12..F-19), **triyaj bekliyor (insan)**
+- Status: round 2 triyajı tamam (8 real) — fix round 2 başladı
 
 Bulgular aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
 Triyaj (real / noise / investigate) insana aittir ve bu dosyaya triyaj tablosu olarak eklenir.
@@ -835,13 +835,24 @@ Next: TRIAGE — human (real / noise / investigate); sonra Developer fix rounds,
 
 ## Triage — round 2
 
+Triyaj: MuaddibL, 2026-11-04. 8 real, 0 noise, 0 investigate — investigate yok, çünkü sekiz
+bulgunun da kanıtı raporda duruyor (yeniden üretim komutu ya da dosya referansı); R-05'e gidecek
+belirsiz bir gözlem kalmadı. Bu turda tek kod değişikliği F-13'ün bir koşulu; gerisi test dalı,
+doküman ve plan kaydı.
+
 | # | Severity | Dimension | Verdict | Karar / gerekçe |
 |---|---|---|---|---|
-| F-12 | Medium | Correctness | — | *awaiting triage* |
-| F-13 | Medium-low | Correctness | — | *awaiting triage* |
-| F-14 | Medium-low | Tests | — | *awaiting triage* |
-| F-15 | Low | Tests | — | *awaiting triage* |
-| F-16 | Low | Plan conformance | — | *awaiting triage* |
-| F-17 | Low | Maintainability | — | *awaiting triage* |
-| F-18 | Info | Docs | — | *awaiting triage* |
-| F-19 | Info | Docs / Contract | — | *awaiting triage* |
+| F-12 | Medium | Correctness | **real — yalnız (a) ve (b)** | Gözlem doğru, üreticinin kendi kaydı da aynısını söylüyor. Ölçüt yanlış tarafta değil (fail-closed); bir Teams renderer'ını affetmenin tek yolu soy ölçütünden vazgeçmek. Yapılacak şey kod değil dürüst kayıt: `docs/testing.md` rule 2 + `docs/commands.md`. **(c) açılmıyor:** asıl ağrı CI'daydı (Linux, boş runner) ve orada çözüldü; masaüstündeki yanlış kırmızı oranı rahatsız ederse ayrı CR. Spec değişmiyor — CB-1 zaten ölçütü plana bırakıyor. |
+| F-13 | Medium-low | Correctness | **real** | F-1'in POSIX yarısının açık varyantı, birebir üretildi. `$2 ~ /^[0-9]+$/` eklenir; gerçek `ps`/`Win32_Process` çıktısında ppid her zaman sayı, hiçbir gerçek süreç düşmez. Sahte tabloya rakamla başlayan devam satırı eklenir. |
+| F-14 | Medium-low | Tests | **real (kayıt olarak)** | Katlamayı sentetikleştirmek bu spec'in değerini aşar (reviewer da önermiyor). Yapılacak: PB-5 satırına kanıtın niteliği ("yalnız gerçek koşumla"), ve üreticinin bu makinede PowerShell probunu çalıştıramadığının kaydı; gözlem VERIFY'a kalır. |
+| F-15 | Low | Tests | **real** | Sınanan betiğin kendi çıktısına bakarak hangi iddianın koşacağına karar vermek yanlış yön: bozulma kırmızı yerine skip üretebilir. Dal dış olguyla seçilir, "ölçülemiyor" dalında da gerçek iddia konur. |
+| F-16 | Low | Plan conformance | **real (kayıt)** | Gerçek drift değil — review raporu segmentin zorunlu çıktısı — ama onay satırının altında zaten aynı türden bir not var; tutarlılık için bir cümle. Triyajda en savunulabilir "noise" adayı buydu, kayıt tercih edildi. |
+| F-17 | Low | Maintainability | **real** | F-6'da düzeltilen hatanın aynısı: yeni yazılan cümle kendi çağrı yerlerini yanlış anlatıyor. |
+| F-18 | Info | Docs | **real** | F-8'in cümlesi yanlış değil, yarım: aracın kendi WMI/COM yardımcıları da aynı affın içinde. |
+| F-19 | Info | Docs / Contract | **real** | CB-4 "doküman ve betik aynı şeyi söyler" diyor; exit 2'nin iki yeni anlamı var, doküman hâlâ yalnız "usage" diyor. |
+
+### Fix round 2 — sıra
+F-13 (kod) → F-15 (test) → F-17 → F-12a → F-18 → F-19 (dokümanlar) → F-14 → F-16 (plan kayıtları).
+Her real bulgu kendi commit'inde, `[review 0003/F-n]` referansıyla; her commit sonrası
+`./scripts/check --fast`, tur sonunda tam yeşil + `scripts/selftest` + iki residue profili — bu kez
+kırmızı koşumlar da kayda geçer (F-12b). Sonra fix diff'i yeniden REVIEW'a gider.
