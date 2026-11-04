@@ -104,7 +104,10 @@ Mode is the `Mode:` line in `AGENTS.md`, set at bootstrap (`workflows/README.md`
 - **Lite / Strict:** no difference.
 - **Refusal:** a red check stops it: `RESIDUE TEST ABORTED (<profile>): check failed in run <n> — the residue test needs a green check`.
 - **Common mistake:** reading the ignored list as a failure — it is there to be auditable, not to
-  be acted on. Memory still reads best on an otherwise idle machine.
+  be acted on. A second one: pasting that list into a pull request as it stands. It carries full
+  command lines, and a system process's command line carries user names, profile paths and the
+  machine SID; shorten it to the lines that matter. Memory still reads best on an otherwise idle
+  machine.
 
 ### `scripts/selftest`
 - **What it does:** proves that `scripts/check`, `scripts/doctor` and `scripts/residue` behave as
