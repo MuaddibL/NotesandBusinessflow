@@ -91,7 +91,10 @@ else report 0 "a step that waits for its child leaves no survivor"; fi
 conf "unit: echo unit ran" "server: sh -c 'sleep 25; :' $LEAK >/dev/null 2>&1 &"
 residue
 exits 1 "residue: leaked process";               has "RESIDUE FOUND (full)" "leak is reported"
-has "$LEAK" "the survivor is named with its command line"
+# Under the survivor heading, not merely somewhere in the output: a leak listed as ignored while
+# something else turned the run red would otherwise pass.
+if printf '%s\n' "$out" | grep '^  survivor  ' | grep -qF "$LEAK"; then report 0 "the survivor is named with its command line"
+else report 1 "the survivor is named with its command line"; fi
 matches '^after run 1: [0-9]+ processes, [0-9]+ survivor\(s\), [0-9]+ ignored([;]|$)' "residue: the summary says what was counted and what was ignored"
 # The memory half of the run line: its shape, never its value — the value is the machine's. The
 # over-tolerance branch cannot be forced deterministically, so it has no test (plan, PB-1 row).
