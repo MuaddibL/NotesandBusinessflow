@@ -4,7 +4,7 @@
 - Plan: `specs/plans/0003-plan.md`
 - Round 1: 2026-11-04, `reviewer` subagent, ayrı salt-okunur oturum (AGENTS.md kural 3)
 - Diff: `git diff main..HEAD` on `feature/0003-residue-noise`, 7 commit, 9 dosya
-- Status: REVIEW round 5 tamam (1 yeni bulgu: F-28, Info) — triyaj bekliyor
+- Status: VERIFY tamam (kriter ↔ kanıt tablosu: 10/10 Pass; 1 test boşluğu V-1, 2 kayıt) — SHIP insanın
 
 Bulgular aşağıda **olduğu gibi** kayıtlı: yumuşatılmadı, yeniden sıralanmadı, yorum eklenmedi.
 Triyaj (real / noise / investigate) insana aittir ve bu dosyaya triyaj tablosu olarak eklenir.
@@ -1622,3 +1622,107 @@ açık kalemler kayıtlı ve kapsam dışı olanlar işaretli.
 **STOP — segment burada bitiyor.**
 Next: TRIAGE — insan (real / noise / investigate); "investigate" çıkarsa R-05 ile QA'ya minimal
 yeniden üretim için gider, doğrudan düzeltmeye değil. Triyaj sonrası: VERIFY — QA.
+
+# VERIFY (2026-11-05)
+
+Rol: QA (`docs/roles/qa.md`), `prompts/verify.md`. Üretim kodu yazılmadı, hiçbir test
+değiştirilmedi; mutasyonların tamamı depo **dışındaki** kopyalarda denendi ve geri alındı
+(`git status --porcelain` tur boyunca boş). Kanıtlar burada sayı ve komut olarak duruyor; çıktı
+dosyası depoya yazılmadı (`docs/testing.md`, Evidence policy).
+
+## Triage — review round 5 (insan)
+
+İnsan `/verify` ile ilerledi: **F-28 real**, düzeltmesi beşinci bir fix turu değil, bu bölümün
+kanıt tablosu (reviewer'ın ve üreticinin ortak önerisi). Düzeltilen sayı: review round 4 bu
+makinede **2 çağrı / 4 koşum** yaptı (`--fast` 1 çağrı = 2 koşum, full 1 çağrı = 2 koşum),
+dördünde de `0 ignored` — "üç ölçüm" değil. QA bunu review dosyasının kendi kayıtlarından saydı
+(`:1145-1146` ve `:1320-1323`), reviewer'ın sözüne dayanmadan.
+
+## Kriter ↔ kanıt tablosu
+
+Profil notu: `scripts/check` bu değişikliğe dokunmuyor; kanıtlar `scripts/selftest` senaryoları
+(CI `doctor` job'ı + bu makine) ve gerçek `scripts/residue` koşumları. CI referansı: run
+`41887188797`, **HEAD'in kendisi** (`60540d3`), dört job da yeşil.
+
+| Acceptance criterion | Evidence | Status |
+|---|---|---|
+| **CB-1** — iki küme; çıkış kodunu yalnız "check'in başlatmış olabileceği" küme belirler | `scripts/selftest`: `posix: a kernel thread is the kernel's, not check's` · `posix: an orphan reparented to init still counts` · `posix: ancestry that cannot be walked counts (fail closed)` · `windows: a service host is the SCM's` · `windows: a service's grandchild is too` · `windows: a child of System is the system's` · `windows: a process of check's own counts`. Gerçek koşumda: CI `residue` job'ı `after run 2: 171 processes, 0 survivor(s), 10 ignored` → `RESIDUE CLEAN (fast, 2 runs)` (on kernel thread sonucu belirlemedi); bu makinede `after run 2: 421 processes, 0 survivor(s), 1 ignored` → `RESIDUE CLEAN (full, 2 runs)`. Mutasyon: M1/M2/M3 (aşağıda) | **Pass** |
+| **CB-2** — yok sayılanlar satır satır, her satır kendi sebebiyle | `scripts/selftest`: `residue: the ignored survivors get their own heading` + `residue: an ignored survivor is named on its own line, with its own reason` (CI, POSIX) · iki **farklı** sebebin ayrı satırlarda durduğu sentetik Windows tablosu: `ignored OS service 7796`, `ignored system process 300`. Gerçek çıktı (bu makine): `704  C:\Windows\System32\RuntimeBroker.exe -Embedding  (OS service)`; CI'da on satırın her biri `(kernel thread)` ile. Mutasyon: M5, M6 | **Pass** |
+| **CB-3** — check'e ait kalıntı hâlâ kırmızı, PID + komut satırıyla | `scripts/selftest` `$LEAK` senaryosu: `residue: leaked process (exit 1)` · `leak is reported` · `the survivor is named with its command line`; POSIX'te ayrıca `residue: a survivor of check's own next to a kernel thread still fails (exit 1)` (CI). Gerçek koşum: bu turda üç kırmızı koşum, hepsinde survivor pid + tam komut satırıyla adlandırıldı ve `RESIDUE FOUND` verdi. Mutasyon: M7, M3 | **Pass** |
+| **CB-4** — `docs/testing.md` rule 1 ve rule 2 yeni tanımı yazar | `docs/testing.md:72-77` (rule 1: "No survivor check started… the rule is about ownership, not about the machine's process count") ve `:78-104` (rule 2: soy zinciri ölçütü, pid 1'in kök **olmadığı**, yürünemeyen soyun sayıldığı, kabul edilen iki kör nokta). Betikle aynı şeyi söylediği iki noktada teste bağlı: "Init (pid 1) is deliberately not such a root" ↔ M2, "including anything whose ancestry cannot be walked" ↔ M3 — ikisi de bozulduğunda senaryolar kırmızıya dönüyor. `docs/commands.md:93-116` ve `README.md:204` aynı ölçütü anlatıyor | **Pass** |
+| **PB-1** — bellek davranışı değişmedi | Biçim: `scripts/selftest` `residue: the run line reports memory against the baseline` (mutasyon M8 bunu kırmızı yapıyor). **Eşik aşımı dalı artık gözlemle de kanıtlı** (F-2'nin "deterministik kurulamıyor" notuna karşılık): depo dışındaki kopyada `ANEW_RESIDUE_MB=0` ile yedi koşumun ikisinde dal, **başka hiçbir sebep olmadan** tek başına kırmızı verdi — `after run 1: 418 processes, 0 survivor(s), 0 ignored; 36101 MB available (-7 MB vs baseline) — over the 0 MB tolerance` → `RESIDUE FOUND (fast)`, exit 1. Komut: `env ANEW_RESIDUE_SETTLE=1 ANEW_RESIDUE_MB=0 sh <kopya>/scripts/residue --fast` | **Pass** (bir dalı kayıtlı boşluk → V-2) |
+| **PB-2** — kırmızı check → abort, exit 1 | `scripts/selftest`: `residue: red check (exit 1)` + `red check aborts the residue test` (`RESIDUE TEST ABORTED (full): check failed in run 1`). Mutasyon: M9 | **Pass** |
+| **PB-3** — iki koşum, iki bakış, settle | İki koşum: `residue: measures after both runs` + `residue --fast runs the fast profile twice` (mutasyon M10 ikisini de kırmızı yapıyor). **İkinci bakış**: otomatik testi yok (→ V-1), davranış QA tarafından iki yönlü gösterildi — settle içinde ölen bir süreçle pristine kopya `0 survivor(s)` / `RESIDUE CLEAN`, aynı kopyanın ikinci bakışı kaldırılmış hâli aynı süreci `survivor  39036  …sh.exe -c "sleep 6; :" <marker>` diye sayıp `RESIDUE FOUND` veriyor (ölçümün kendi `tr -d \r` süreci de o hâlde survivor görünüyor) | **Pass** (gözlemle; regresyon muhafızı eksik → V-1) |
+| **PB-4** — CLI ve 0/1/2 sözleşmesi | `scripts/selftest`: `residue: unknown argument (exit 2)` + `residue: prints usage` · `residue: a settle time that is not a number (exit 2)` · `residue: a memory tolerance that is not a number (exit 2)`. Mutasyon: M12, M13, M14 | **Pass** |
+| **PB-5** — iki platform | **Linux/CI**: `residue` job'ı HEAD'de iki profilde de yeşil (`RESIDUE CLEAN (full, 2 runs)`, `RESIDUE CLEAN (fast, 2 runs)`), bir önceki commit'te de (run `41883387818`) — 2 çağrı × 2 profil × 2 commit. **Windows/MINGW**: bu makinede beş koşum, üçü kırmızı (hepsinde hayatta kalan kullanıcının kendi uygulaması: Chrome Beta renderer `…client-id=2245/2246/3189`, `Antigravity IDE` markdown dil sunucusu), sonra iki profil de temiz (`RESIDUE CLEAN (full, 2 runs)` · `RESIDUE CLEAN (fast, 2 runs)`). Kırmızılar ölçütün fail-closed çalışması; F-25'in ayrımı üç kez de doğru cevabı verdi (survivor `check.conf` adımı ya da çocuğu değil → daha sessiz makine). PowerShell satır katlamasının otomatik testi hâlâ yok (F-14/F-24, plan PB-5 satırı) | **Pass** (bir kayıtlı boşlukla) |
+| **PB-6** — çağıran yerler değişmeden çalışır | `git diff --name-only main..HEAD`: `scripts/doctor` ve `workflows/bootstrap.md` **diffte yok**; `.github/workflows/check.yml` ve `README.md` yalnız planın söylediği metin düzeltmesini taşıyor (job adımları aynı). CI'da `doctor` ve `residue` job'ları HEAD'de yeşil; bu makinede `./scripts/doctor --strict` → `0 fail, 0 warn` | **Pass** |
+
+Tur boyunca sabit kalan üç ölçüm: `./scripts/check` → `CHECK GREEN (full, 6 steps, 9 s)` (CI'da
+`CHECK GREEN (full, 6 steps, 3 s)`) · `./scripts/doctor --strict` → `0 fail, 0 warn` ·
+`./scripts/selftest` → bu makinede `111 passed, 0 failed, 1 skipped`, CI'da (Linux)
+`121 passed, 0 failed, 0 skipped`.
+
+## Testler kırılabiliyor mu — 15 mutasyon, depo dışında
+
+Her mutasyon pristine kopyaya uygulandı, `scripts/selftest` koşuldu, sonra geri alındı. "Kırılamayan
+test kanıt değil" (`prompts/verify.md`).
+
+| # | Bozulan davranış | Kırmızıya dönen senaryolar |
+|---|---|---|
+| M1 | sınıflandırıcı hiçbir şeyi `ignored` yapmıyor | 5 (posix kernel thread, üç Windows OS kökü, F-26 senaryosu) |
+| M2 | pid 1 OS kökü sayılıyor (plan R-2'nin ihlali) | 2 (`an orphan reparented to init still counts`, `a process of check's own counts`) |
+| M3 | yürünemeyen soy `ignored` (fail-open) | 6 — uçtan uca `$LEAK` senaryosu dâhil |
+| M4 | tablo tarafı süzgeci ppid yarısını kaybediyor | 1 (`a wrapped table line does not steal a pid's parent` — F-26'nın muhafızı) |
+| M7 | `counted` survivor koşumu kırmızı yapmıyor | 2 (`residue: leaked process (exit 1)`, `leak is reported`) |
+| M8 | run satırının bellek yarısı kayboluyor | 1 (`the run line reports memory against the baseline`) |
+| M9 | kırmızı check abort etmiyor | 1 (`residue: red check (exit 1)`) |
+| M10 | iki yerine tek koşum | 2 (`measures after both runs`, `--fast runs the fast profile twice`) |
+| M12/M13/M14 | settle / tolerans / argüman doğrulaması kalkıyor | 1 + 1 + 2 |
+| M5, M6, M15 | ignore satırının sebebi · ignore başlığı · ölçümün kendi satır süzgeci | bu makinede **0** — senaryolar POSIX'e özel, Windows'ta atlanıyor. CI'da koşan o senaryoların yakaladığı, sahte `ps` + sahte `uname` ile burada ayrıca gösterildi: M5 → "named on its own line, with its own reason" kırmızı; M6 → "the ignored survivors get their own heading" kırmızı; M15 → sınıflandırıcı satırı reddediyor, `residue: cannot classify survivors`, exit 2 (senaryonun `exits 0` + iki `hasnt` iddiası kırmızı) |
+| M11 | ikinci bakış (settle) kalkıyor | **0 — hiçbir senaryo yakalamıyor** → V-1 |
+
+## Bulgular
+
+**V-1 — MEDIUM-LOW — Tests.** PB-3'ün "ikinci bakış" yarısının otomatik muhafızı yok: ikinci
+bakışı kaldıran mutasyon selftest'i `111 passed, 0 failed` bırakıyor. Davranışın kendisi
+kanıtlı (yukarıdaki iki yönlü gözlem), eksik olan regresyona karşı duran test. Bu boşluk
+**bu değişiklikle gelmedi** — ikinci bakış 0003'ten önce de vardı ve PB-3 onu korumayı istiyor;
+korunduğu iki koşum ayağıyla ve gözlemle gösterildi. Deterministik testi mümkün: selftest'in
+sahte `ps`'i zaten çağrı sayıyor (`$FAKEPS_CALLS`), yalnız 3. çağrıda görünüp 4.'te kaybolan bir
+satır, zamanlamaya hiç bağlı olmayan bir "geçici süreç" verir; iddia `hasnt "survivor  999"`.
+**Önerim:** real — ama beşinci bir fix turu + altıncı review turu açmak yerine, kardeşleri gibi
+(F-2, F-14, F-21) plan PB-3 satırına kayıtlı boşluk olarak yazılsın ve F-12c gibi ayrı bir
+CR'ye bırakılsın. Karşı seçenek: dört satırlık test şimdi eklensin (fix round 5 → review round 6).
+Karar insanın.
+
+**V-2 — INFO — kayıt.** PB-1'in "bellek okunamayan platform" dalı (`note: memory is not
+measurable…`) desteklenen iki platformun hiçbirinde koşmuyor; selftest hangi yarıyı iddia
+edeceğine platforma bakarak karar veriyor. Zaten plan PB-1 satırında yazılı (F-15/F-21).
+**Önerim:** aksiyon yok, kayıt.
+
+**V-3 — INFO — kayıt.** Bu makinede selftest 10 senaryoyu atlıyor (111 vs CI'daki 121); atlananlar
+residue'nun POSIX ölçüm dalının uçtan uca senaryoları. Kanıtları HEAD'in CI koşumunda yeşil, ve
+M5/M6/M15 ile o senaryoların gerçekten koruduğu gösterildi. **Önerim:** 0002'deki V-6 deseni —
+PR'a CI run linki (`41887188797`) yazılsın, merge CI yeşiline bağlı kalsın.
+
+Kanıtsız kriter yok. İddia yerine uygulama detayı sınayan test görmedim: senaryoların tamamı
+çıktı metni + çıkış kodu üzerinden davranış iddia ediyor.
+
+## Koşum kayıtları (kırmızılar dâhil, F-12b)
+
+| Koşum | Sonuç |
+|---|---|
+| `./scripts/residue` (full, 1) | `RESIDUE FOUND` — 1 survivor: Chrome Beta renderer (`…client-id=2245`) |
+| `./scripts/residue --fast` (1) | `RESIDUE FOUND` — 2 survivor: Chrome Beta renderer (`…2246`) + `Antigravity IDE` markdown dil sunucusu |
+| `./scripts/residue` (full, 2) | `RESIDUE CLEAN (full, 2 runs)` — `1 ignored`: `RuntimeBroker.exe (OS service)` |
+| `./scripts/residue --fast` (2) | `RESIDUE FOUND` — 1 survivor: Chrome Beta renderer (`…3189`) |
+| `./scripts/residue --fast` (3) | `RESIDUE CLEAN (fast, 2 runs)` |
+
+Üç kırmızının üçünde de hayatta kalan, ölçüm penceresinde doğan bir kullanıcı uygulamasıydı;
+`scripts/check.conf` adımlarından biri ya da çocuğu olan tek bir süreç çıkmadı. Ignore yolu bu
+turda bu makinede bir kez (full, 2. koşum) ve CI'da bir kez (on kernel thread) gerçekten doldu —
+F-27'nin "yeniden üretilemiyor" sınırı duruyor, ama artık iki ayrı platformdan karşı örneği var.
+
+**STOP — segment burada bitiyor.** QA kanıt tablosunu verdi; üretim kodu yazılmadı, hiçbir dosya
+taşınmadı.
+Next: SHIP — insan (DoD, PR, merge, spec'i `specs/done/`'a taşı, `Status: Shipped`).
