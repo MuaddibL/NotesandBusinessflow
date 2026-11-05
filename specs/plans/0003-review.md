@@ -1726,3 +1726,26 @@ F-27'nin "yeniden üretilemiyor" sınırı duruyor, ama artık iki ayrı platfor
 **STOP — segment burada bitiyor.** QA kanıt tablosunu verdi; üretim kodu yazılmadı, hiçbir dosya
 taşınmadı.
 Next: SHIP — insan (DoD, PR, merge, spec'i `specs/done/`'a taşı, `Status: Shipped`).
+
+## Triage — VERIFY (2026-11-05)
+
+Triyaj: MuaddibL, 2026-11-05 — QA'nın önerisi uygulandı.
+
+| # | Severity | Konu | Triage | Sonuç |
+|---|---|---|---|---|
+| V-1 | MEDIUM-LOW | PB-3'ün ikinci bakışının regresyon muhafızı yok | **real** | Beşinci fix turu açılmadı: boşluk plan PB-3 satırına yazıldı, deterministik testi **ayrı CR'a** bırakıldı — F-12c ile aynı muamele |
+| V-2 | INFO | PB-1'in "bellek okunamıyor" dalı iki platformda da koşmuyor | **kayıt** | Aksiyon yok; plan PB-1 satırında zaten yazılı (F-15/F-21) |
+| V-3 | INFO | Bu makinede 10 senaryo atlanıyor, kanıtı CI'da | **kayıt** | 0002'deki V-6 deseni: PR'a CI run linki yazılır, merge CI yeşiline bağlı |
+
+**V-1 gerekçesi.** Boşluk bu değişiklikle gelmedi — ikinci bakış 0003'ten önce de vardı; PB-3 onu
+korumayı istiyor ve korunduğu iki koşum ayağıyla ve iki yönlü gözlemle gösterildi. Dördüncü fix
+turu zaten `workflows/feature-development.md:25`'in sınırının dışındaydı ve insan R-06'yı tartıp
+aşmıştı; dört satırlık bir test için beşinci tur + altıncı review turu açmak, bu spec'in
+kapsamından çok tur maliyeti ekler. Testin nasıl yazılacağı kayıtlı: sahte `ps` zaten çağrı
+sayıyor (`$FAKEPS_CALLS`), yalnız 3. çağrıda görünüp 4.'te kaybolan bir satır zamanlamaya hiç
+bağlı olmayan bir geçici süreç verir.
+
+Bulgu sayımı (beş review turu + VERIFY): **28 review bulgusu** — 27 real (26'sı kendi
+commit'iyle kapandı, F-28'in düzeltmesi VERIFY kanıt tablosunda), 1 noise ve gerekçesi yazıldı
+(F-11); F-12'nin (c) ayağı kapsam dışı, ayrı CR. Artı **3 VERIFY bulgusu** — 1 real (V-1, ayrı
+CR), 2 kayıt (V-2, V-3).
