@@ -92,21 +92,38 @@ Mode is the `Mode:` line in `AGENTS.md`, set at bootstrap (`workflows/README.md`
 
 ### `scripts/residue`
 - **What it does:** the residue test (`docs/testing.md`, Resource hygiene) — runs check twice and
-  names every process, or memory drop over the tolerance, that outlives a run. `--fast` tests the
-  fast profile.
+  names every process check could have started, or memory drop over the tolerance, that outlives
+  a run. Survivors the operating system started (kernel threads, services) are listed under their
+  own heading with the reason and do not decide the result; an ancestry that cannot be walked
+  counts. `--fast` tests the fast profile.
 - **When to use it:** at bootstrap (both profiles), and whenever `scripts/check.conf` changes.
-- **Reads / writes:** runs `scripts/check`; writes only a temp dir, deleted on exit.
+- **Reads / writes:** runs `scripts/check` and `scripts/lib/classify-survivors` (the ownership
+  split, kept separate so `scripts/selftest` can feed it synthetic process tables); writes only a
+  temp dir, deleted on exit.
 - **Stops at:** `RESIDUE CLEAN (<profile>, 2 runs)` (exit 0) or `RESIDUE FOUND (<profile>)` (exit 1).
+  Exit 2 is a usage error, or a measurement it refuses to draw a conclusion from
+  (`residue: cannot list processes on this platform`, `residue: cannot classify survivors`).
 - **Lite / Strict:** no difference.
 - **Refusal:** a red check stops it: `RESIDUE TEST ABORTED (<profile>): check failed in run <n> — the residue test needs a green check`.
-- **Common mistake:** running it on a busy machine — whatever starts meanwhile is listed too.
+- **Common mistake:** reading the ignored list as a failure — it is there to be auditable, not to
+  be acted on. A second one: pasting that list into a pull request as it stands. It carries full
+  command lines, and a system process's command line carries user names, profile paths and the
+  machine SID; shorten it to the lines that matter. A third: reading a red run on a busy desktop
+  as a defect. A child your browser or chat client starts while the test measures descends from
+  no OS root, so it is counted — deliberately, because nothing distinguishes it from check's own
+  by ancestry. Read the survivor's command line first: a step of `scripts/check.conf` or a child
+  of one (here uv, ruff, mypy, pytest) means a rerun would hide real residue; an application of
+  your own you can account for means the machine was busy; neither means count it as check's.
+  Rerun on a quieter machine. Memory still reads best on an otherwise idle machine.
 
 ### `scripts/selftest`
 - **What it does:** proves that `scripts/check`, `scripts/doctor` and `scripts/residue` behave as
   documented, scenario by scenario.
 - **When to use it:** after changing any ANEW script; CI runs it after doctor.
 - **Reads / writes:** copies the ANEW core into a temp dir outside the repo; writes nothing in the repo.
-- **Stops at:** `== selftest: <n> passed, <m> failed ==` (exit 1 on any failure).
+- **Stops at:** `== selftest: <n> passed, <m> failed, <k> skipped ==` (exit 1 on any failure). A
+  skipped scenario is one this platform or this workspace cannot run (the POSIX measurement on
+  Windows; the adapter checks in a repo without `adapters/`); it is named on its own line.
 - **Lite / Strict:** no difference.
 - **Refusal:** none.
 - **Common mistake:** editing a script and the selftest together to make it pass — a red selftest

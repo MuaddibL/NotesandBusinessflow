@@ -4,9 +4,12 @@
 # each run compares against the baseline taken before the first.
 #   ./scripts/residue          full profile (the one bootstrap reports at its gate)
 #   ./scripts/residue --fast   the fast profile (bootstrap runs both)
-# Exit 0 = clean, 1 = residue found or check red, 2 = usage. A new process counts as a survivor
-# only if it is still alive at a second look one settle period later, so short-lived background
-# activity drops out; anything else started meanwhile is listed — the list names it, you judge.
+# Exit 0 = clean, 1 = residue found or check red, 2 = usage, or a measurement it will not draw a
+# conclusion from. A new process counts as a survivor only if it is still alive at a second look
+# one settle period later, so short-lived background activity drops out. What is left is split by
+# scripts/lib/classify-survivors: processes check could have started decide the exit code,
+# processes it could not (kernel threads, OS services) are listed under their own heading and do
+# not. An ancestry that cannot be walked counts.
 # Tunables: ANEW_RESIDUE_SETTLE (seconds to wait after each run, default 5),
 #           ANEW_RESIDUE_MB (memory tolerance in MB, default 512).
 set -u
@@ -31,7 +34,7 @@ case "$tolerance" in ''|*[!0-9]*) usage ;; esac
 TMP=$(mktemp -d "${TMPDIR:-/tmp}/anew-residue.XXXXXX") || { echo "residue: mktemp failed" >&2; exit 1; }
 trap 'rm -rf "$TMP"' EXIT INT TERM
 
-# --- measure <file>: "pid<TAB>command" per process into <file>, available MB into $mem ---
+# --- measure <file>: "pid<TAB>ppid<TAB>command" per process into <file>, available MB into $mem ---
 # The measuring processes themselves are left out, nothing else.
 case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) os=windows ;; *) os=posix ;; esac
 measure() {
@@ -43,7 +46,7 @@ measure() {
       $stub = ($all | Where-Object { $_.ProcessId -eq $me }).ParentProcessId
       "MEM`t" + (Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory).AvailableMBytes
       $all | Where-Object { $_.ProcessId -ne $me -and $_.ProcessId -ne $stub -and $_.ParentProcessId -ne $me } |
-        ForEach-Object { "{0}`t{1}" -f $_.ProcessId, $(if ($_.CommandLine) { $_.CommandLine.Trim() } else { $_.Name }) }
+        ForEach-Object { "{0}`t{1}`t{2}" -f $_.ProcessId, $_.ParentProcessId, $(if ($_.CommandLine) { (($_.CommandLine -split "[`r`n`t]+") -join " ").Trim() } else { $_.Name }) }
     ' </dev/null 2>/dev/null | tr -d '\r' > "$TMP/raw" || return 1
     mem=$(awk -F'\t' '$1 == "MEM" { print $2 }' "$TMP/raw")
     grep -v '^MEM	' "$TMP/raw" > "$1"
@@ -54,10 +57,15 @@ measure() {
       mem=$(vm_stat | awk '/page size of/ { ps = $8 } /^Pages (free|inactive|speculative)/ { gsub(/\./, "", $NF); n += $NF }
                            END { if (ps) printf "%d", n * ps / 1048576 }')
     fi
-    ps -e -o pid= -o args= > "$TMP/raw" || return 1
-    awk '{ pid = $1; sub(/^[ \t]*[0-9]+[ \t]+/, ""); if ($0 !~ /^ps -e -o pid= -o args=/) print pid "\t" $0 }' \
+    ps -e -o pid= -o ppid= -o args= > "$TMP/raw" || return 1
+    awk '{ pid = $1; parent = $2; sub(/^[ \t]*[0-9]+[ \t]+[0-9]+[ \t]+/, "")
+           if ($0 !~ /^ps -e -o pid= -o ppid= -o args=/) print pid "\t" parent "\t" $0 }' \
       "$TMP/raw" > "$1"
   fi
+  # Defence in depth: only well-formed "pid<TAB>…" lines reach the comparison. A command line
+  # carrying an embedded newline or tab would otherwise put text where a pid belongs, and a text
+  # fragment is not a process — it would be counted as a survivor and turn the run red.
+  awk -F'\t' '$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/' "$1" > "$TMP/rows" && mv "$TMP/rows" "$1"
   case "$mem" in *[!0-9]*) mem= ;; esac
   [ -s "$1" ]
 }
@@ -92,8 +100,15 @@ for run in 1 2; do
   else
     : > "$TMP/survivors"
   fi
-  n=$(wc -l < "$TMP/survivors" | tr -d ' ')
-  line="after run $run: $(wc -l < "$TMP/run" | tr -d ' ') processes, $n survivor(s)"
+  if [ -s "$TMP/survivors" ]; then
+    sh "$ROOT/scripts/lib/classify-survivors" "$os" "$TMP/again" < "$TMP/survivors" > "$TMP/classified" \
+      || { echo "residue: cannot classify survivors" >&2; exit 2; }
+  else
+    : > "$TMP/classified"
+  fi
+  n=$(awk -F'\t' '$1 == "counted"' "$TMP/classified" | wc -l | tr -d ' ')
+  ignored=$(awk -F'\t' '$1 == "ignored"' "$TMP/classified" | wc -l | tr -d ' ')
+  line="after run $run: $(wc -l < "$TMP/run" | tr -d ' ') processes, $n survivor(s), $ignored ignored"
   if [ -n "$base_mem" ] && [ -n "$run_mem" ]; then
     line="$line; $run_mem MB available ($((run_mem - base_mem)) MB vs baseline)"
     if [ $((base_mem - run_mem)) -gt "$tolerance" ]; then
@@ -101,9 +116,13 @@ for run in 1 2; do
     fi
   fi
   echo "$line"
+  if [ "$ignored" -gt 0 ]; then
+    echo "  ignored — check cannot have started these; they do not decide the result:"
+    awk -F'\t' '$1 == "ignored" { printf "    %s  %s  (%s)\n", $3, $4, $2 }' "$TMP/classified"
+  fi
   if [ "$n" -gt 0 ]; then
     found=1
-    awk -F'\t' '{ printf "  survivor  %s  %s\n", $1, $2 }' "$TMP/survivors"
+    awk -F'\t' '$1 == "counted" { printf "  survivor  %s  %s\n", $2, $3 }' "$TMP/classified"
   fi
 done
 

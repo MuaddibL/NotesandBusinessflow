@@ -2,11 +2,15 @@
 # ANEW selftest — proves that scripts/check, scripts/doctor and scripts/residue behave as documented.
 # Every scenario runs in a throwaway copy of this workspace in a temp dir OUTSIDE the repo
 # (docs/testing.md, Evidence policy), asserts on the real output and exit code, and is deleted.
-# Exit 0 = all scenarios pass, exit 1 = at least one failed. Runs in CI next to doctor.
+# Exit 0 = all scenarios pass, exit 1 = at least one failed. A scenario this platform or this
+# workspace cannot run is named and counted as skipped, so a summary never looks wider than the
+# run was.
+# Runs in CI next to doctor.
 set -u
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 passed=0
 failed=0
+skipped=0
 TMP=$(mktemp -d "${TMPDIR:-/tmp}/anew-selftest.XXXXXX") || { echo "selftest: mktemp failed" >&2; exit 1; }
 trap 'rm -rf "$TMP"' EXIT INT TERM
 
@@ -17,6 +21,7 @@ report() { if [ "$1" -eq 0 ]; then passed=$((passed + 1)); echo "ok    $2"
 exits()  { [ "$rc" -eq "$1" ]; report $? "$2 (exit $1)"; }
 has()    { printf '%s\n' "$out" | grep -qF -- "$1"; report $? "$2"; }
 hasnt()  { if printf '%s\n' "$out" | grep -qF -- "$1"; then report 1 "$2"; else report 0 "$2"; fi; }
+skip()   { skipped=$((skipped + 1)); echo "skip  $1"; }   # a scenario this platform or workspace cannot run
 
 # --- scripts/check: a bare copy of the script with a conf per scenario ---
 C="$TMP/check"
@@ -71,6 +76,8 @@ matches '^CHECK GREEN \(fast, 1 steps\)$' "no usable clock: times are left out, 
 # --- scripts/residue: same bare copy. Assertions never require an idle machine: they look for
 # this run's own marker, so another process starting meanwhile cannot make them flaky.
 cp "$ROOT/scripts/residue" "$C/scripts/residue"
+mkdir -p "$C/scripts/lib"
+cp "$ROOT/scripts/lib/classify-survivors" "$C/scripts/lib/classify-survivors"   # residue calls it
 residue() { run env ANEW_RESIDUE_SETTLE=1 ANEW_RESIDUE_MB=1000000 sh "$C/scripts/residue" "$@"; }
 LEAK=anew-residue-leak-$$
 
@@ -89,7 +96,152 @@ else report 0 "a step that waits for its child leaves no survivor"; fi
 conf "unit: echo unit ran" "server: sh -c 'sleep 25; :' $LEAK >/dev/null 2>&1 &"
 residue
 exits 1 "residue: leaked process";               has "RESIDUE FOUND (full)" "leak is reported"
-has "$LEAK" "the survivor is named with its command line"
+# Under the survivor heading, not merely somewhere in the output: a leak listed as ignored while
+# something else turned the run red would otherwise pass.
+if printf '%s\n' "$out" | grep '^  survivor  ' | grep -qF "$LEAK"; then report 0 "the survivor is named with its command line"
+else report 1 "the survivor is named with its command line"; fi
+matches '^after run 1: [0-9]+ processes, [0-9]+ survivor\(s\), [0-9]+ ignored([;]|$)' "residue: the summary says what was counted and what was ignored"
+# The memory half of the run line: its shape, never its value — the value is the machine's. The
+# over-tolerance branch cannot be forced deterministically, so it has no test (plan, PB-1 row).
+# Which half to assert is decided by the platform, not by the output under test: a measurement
+# that breaks must turn this red, not quietly pick the other branch.
+mem_readable=no
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) mem_readable=yes ;; esac
+[ -r /proc/meminfo ] && mem_readable=yes
+command -v vm_stat >/dev/null 2>&1 && mem_readable=yes
+if [ "$mem_readable" = yes ]; then
+  matches 'MB available \(-?[0-9]+ MB vs baseline\)' "residue: the run line reports memory against the baseline"
+else
+  matches '^note: memory is not measurable on this platform; processes only$' "residue: a platform without a memory reading says so and keeps going"
+fi
+env ANEW_RESIDUE_SETTLE=x sh "$C/scripts/residue" >/dev/null 2>&1; rc=$?; out=
+exits 2 "residue: a settle time that is not a number"
+env ANEW_RESIDUE_MB=x sh "$C/scripts/residue" >/dev/null 2>&1; rc=$?; out=
+exits 2 "residue: a memory tolerance that is not a number"
+
+# A survivor check cannot have started must not decide the result — the regression this whole
+# change exists for (spec 0003). Forced deterministically with a ps on PATH that reports a fixed
+# table and adds a kernel thread once the runs have begun. POSIX only: the Windows measurement
+# goes through PowerShell, and is covered by the classifier scenarios plus a real run (plan 0003).
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) skip "residue: kernel-thread scenario is POSIX only (measurement here goes through PowerShell)" ;;
+  *)
+    mkdir -p "$TMP/fakeps"
+    cat > "$TMP/fakeps/ps" <<'FAKEPS'
+#!/bin/sh
+# A fixed process table. From the third call on — the runs have started by then — a kernel
+# thread appears, exactly the shape that made the residue job flaky in CI.
+n=$(cat "$FAKEPS_CALLS" 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" > "$FAKEPS_CALLS"
+printf '%s\n' "    1     0 /sbin/init" "    2     0 [kthreadd]" "  100     1 /bin/sh scripts/check"
+[ "$n" -ge 3 ] && printf '%s\n' "  777     2 [kworker/R-selftest]"
+# Two command lines that wrap: text where a pid belongs. The second starts with a number, so
+# only the ppid field gives it away. Neither is a process; neither may become a survivor.
+[ "$n" -ge 3 ] && printf '%s\n' "  and a second line of the previous command"
+[ "$n" -ge 3 ] && printf '%s\n' "  4242 and the rest of a wrapped command line"
+[ "$n" -ge 3 ] && [ -n "${FAKEPS_LEAK:-}" ] && printf '%s\n' "  888     1 python -m pytest (orphaned by check)"
+exit 0
+FAKEPS
+    chmod +x "$TMP/fakeps/ps"
+    : > "$TMP/fakeps/calls"
+    conf 'unit [fast]: echo unit ran'
+    run env PATH="$TMP/fakeps:$PATH" FAKEPS_CALLS="$TMP/fakeps/calls" \
+        ANEW_RESIDUE_SETTLE=1 ANEW_RESIDUE_MB=1000000 sh "$C/scripts/residue" --fast
+    exits 0 "residue: a kernel thread appearing mid-run does not fail the test"
+    has "RESIDUE CLEAN" "residue: the run is clean despite the new process"
+    has "ignored — check cannot have started these" "residue: the ignored survivors get their own heading"
+    # One line, pid + command + its own reason — not a collective footnote under the heading
+    # (spec CB-2). That two different reasons stay on their own lines is asserted on the
+    # synthetic Windows table below; POSIX has only one reason to give.
+    matches '^ +777 +\[kworker/R-selftest\] +\(kernel thread\)$' "residue: an ignored survivor is named on its own line, with its own reason"
+    matches 'after run 2: [0-9]+ processes, 0 survivor\(s\), 1 ignored' "residue: the kernel thread is counted as ignored, not as a survivor"
+    hasnt "a second line of the previous command" "residue: a wrapped command line is not a process"
+    hasnt "the rest of a wrapped command line" "residue: a wrapped line is not a process even when it starts with a number"
+    # The other half: ignoring the kernel thread must not swallow a real survivor next to it.
+    : > "$TMP/fakeps/calls"
+    run env PATH="$TMP/fakeps:$PATH" FAKEPS_CALLS="$TMP/fakeps/calls" FAKEPS_LEAK=1 \
+        ANEW_RESIDUE_SETTLE=1 ANEW_RESIDUE_MB=1000000 sh "$C/scripts/residue" --fast
+    exits 1 "residue: a survivor of check's own next to a kernel thread still fails"
+    has "survivor  888  python -m pytest (orphaned by check)" "residue: an orphan reparented to init is check's, not the system's"
+    matches '^ +777 +\[kworker/R-selftest\] +\(kernel thread\)$' "residue: the kernel thread is still reported as ignored, with its reason"
+    ;;
+esac
+
+# --- scripts/lib/classify-survivors: synthetic process tables. A green residue run on a real
+# machine says nothing about the classification — the cases that matter (a kernel thread, an
+# orphan of check's own, an ancestry that cannot be walked) are fed in by hand.
+T=$(printf '\t')
+classify() { survivors=$1; shift; out=$(sh "$C/scripts/lib/classify-survivors" "$@" < "$survivors" 2>&1); rc=$?; }
+
+echo "== scripts/lib/classify-survivors =="
+classify /dev/null
+exits 2 "classify: no arguments";                has "usage:" "classify: prints usage"
+classify /dev/null solaris "$C/table"
+exits 2 "classify: unknown platform"
+classify /dev/null posix "$TMP/no-such-table"
+exits 2 "classify: unreadable table";            has "cannot read process table" "classify: names the missing table"
+: > "$C/empty-table"
+printf '%s\n' "500${T}1${T}python leaked" > "$C/survivors"
+classify "$C/survivors" posix "$C/empty-table"
+exits 2 "classify: empty table";                 has "empty process table" "classify: an empty table never swallows a survivor"
+
+# POSIX. pid 1 is deliberately NOT a root: an orphan of check's own is reparented to init.
+printf '%s\n' \
+  "1${T}0${T}/sbin/init"                 "2${T}0${T}[kthreadd]" \
+  "77${T}2${T}[kworker/R-mlx5_cmd]"      "90${T}1${T}python -m pytest (orphaned by check)" \
+  "40${T}1${T}/bin/sh scripts/check"     "55${T}40${T}uv run pytest" \
+  "61${T}61${T}its own parent"           > "$C/table"
+printf '%s\n' "77${T}2${T}[kworker/R-mlx5_cmd]" "90${T}1${T}python -m pytest (orphaned by check)" \
+  "55${T}40${T}uv run pytest" "99${T}12345${T}parent is gone" "61${T}61${T}its own parent" > "$C/survivors"
+classify "$C/survivors" posix "$C/table"
+exits 0 "classify: posix table"
+has "ignored${T}kernel thread${T}77"  "posix: a kernel thread is the kernel's, not check's"
+has "counted${T}90"                   "posix: an orphan reparented to init still counts"
+has "counted${T}55"                   "posix: a process of check's own counts"
+has "counted${T}99"                   "posix: ancestry that cannot be walked counts (fail closed)"
+has "counted${T}61"                   "posix: a process that is its own parent counts, and does not hang"
+
+# Windows. The service control manager is the root; session id is not a criterion — svchost and
+# SearchProtocolHost were both observed running in the interactive session (plan 0003/R-1).
+printf '%s\n' \
+  "0${T}0${T}System Idle Process"  "4${T}0${T}System"  "1408${T}1304${T}wininit.exe" \
+  "1504${T}1408${T}C:\\WINDOWS\\system32\\services.exe" \
+  "9804${T}1504${T}C:\\WINDOWS\\system32\\SearchIndexer.exe /Embedding" \
+  "20908${T}9804${T}SearchProtocolHost.exe Global\\UsGthrPipe" \
+  "7796${T}1504${T}C:\\WINDOWS\\system32\\svchost.exe -k netsvcs" \
+  "300${T}4${T}Registry" \
+  "25300${T}25156${T}C:\\Program Files\\Git\\usr\\bin\\bash.exe" \
+  "16168${T}25300${T}python.exe -m pytest" > "$C/table"
+printf '%s\n' "20908${T}9804${T}SearchProtocolHost.exe Global\\UsGthrPipe" \
+  "7796${T}1504${T}C:\\WINDOWS\\system32\\svchost.exe -k netsvcs" "300${T}4${T}Registry" \
+  "16168${T}25300${T}python.exe -m pytest" "31000${T}60606${T}python.exe, parent is gone" > "$C/survivors"
+classify "$C/survivors" windows "$C/table"
+exits 0 "classify: windows table"
+has "ignored${T}OS service${T}7796"    "windows: a service host is the SCM's"
+has "ignored${T}OS service${T}20908"   "windows: a service's grandchild is too"
+has "ignored${T}system process${T}300" "windows: a child of System is the system's"
+has "counted${T}16168"                 "windows: a process of check's own counts"
+has "counted${T}31000"                 "windows: ancestry that cannot be walked counts (fail closed)"
+
+# A survivor line whose pid is not a number is not a process: the measurement lost a line break.
+printf '%s\n' "16168${T}25300${T}python.exe -m pytest" "and the rest of a wrapped command line" > "$C/survivors"
+classify "$C/survivors" windows "$C/table"
+exits 2 "classify: a survivor line whose pid is not a number"
+has "malformed survivor line" "classify: names the line it refuses"
+
+# The pid field alone does not settle it: a wrapped line can start with a digit of its own.
+printf '%s\n' "16168${T}25300${T}python.exe -m pytest" "4242${T}and${T}4242 and the rest of it" > "$C/survivors"
+classify "$C/survivors" windows "$C/table"
+exits 2 "classify: a survivor line whose ppid is not a number"
+has "pid or ppid is not a number" "classify: says which field left the line malformed"
+
+# The process table is read by the same rule. Were this wrapped line kept as a row, pid 77 would
+# lose its kernel-thread parent and be counted instead of ignored.
+printf '%s\n' "1${T}0${T}/sbin/init" "2${T}0${T}[kthreadd]" \
+  "77${T}2${T}[kworker/R-mlx5_cmd]" "77${T}and${T}the wrapped tail of the previous line" > "$C/table"
+printf '%s\n' "77${T}2${T}[kworker/R-mlx5_cmd]" > "$C/survivors"
+classify "$C/survivors" posix "$C/table"
+exits 0 "classify: a wrapped table line"
+has "ignored${T}kernel thread${T}77" "classify: a wrapped table line does not steal a pid's parent"
 
 # --- scripts/doctor: a git-initialised copy of the ANEW core only, reset between scenarios ---
 # Only what doctor reads: no application code, and no real specs or plans (a project's own specs
@@ -175,7 +327,7 @@ if [ -f "$W/adapters/cursor/commands/plan.md" ]; then
   doctor;          has "FAIL  adapter parity: codex skill plan is not explicit-only" "a codex skill Codex could start by itself is a failure"
   reset; doctor;   hasnt "missing in codex" "restored codex adapter is clean"
 else
-  echo "skip  adapter parity (no adapters/ in this repo)"
+  skip "adapter parity (no adapters/ in this repo)"
 fi
 
 if [ -f "$W/adapters/claude-code/.claude/commands/plan.md" ]; then
@@ -183,7 +335,7 @@ if [ -f "$W/adapters/claude-code/.claude/commands/plan.md" ]; then
   doctor;          exits 1 "command reference drift"; has "FAIL  command reference out of date: /plan missing from docs/commands.md" "a removed command section is a failure"
   reset; doctor;   hasnt "command reference out of date" "restored reference is clean"
 else
-  echo "skip  command reference drift (no adapters/ in this repo)"
+  skip "command reference drift (no adapters/ in this repo)"
 fi
 
 if [ -f "$W/.anew-version" ]; then
@@ -200,6 +352,6 @@ fi
 reset; rm -f "$W/docs/testing.md"
 doctor;            exits 1 "core file missing"; has "FAIL  missing: docs/testing.md" "missing core file is a failure"
 
-echo "== selftest: $passed passed, $failed failed =="
+echo "== selftest: $passed passed, $failed failed, $skipped skipped =="
 [ "$failed" -eq 0 ] || exit 1
 exit 0

@@ -69,14 +69,38 @@ zaman vardır: `docs/design/` (bkz. oradaki `README.md`).
    the need to create one is about to violate rule 1. `scripts/doctor` warns on both violations.
 
 ## Resource hygiene
-1. **A check run leaves nothing running.** No survivors of any kind: build/compile daemons,
-   package-manager services, test hosts and parallel workers, watch modes, browsers, the application
-   under test, containers or emulators started for the run. Agents run check an order of magnitude
-   more often than humans; per-run residue compounds into machine starvation.
+1. **A check run leaves nothing of its own running.** No survivor check started, of any kind:
+   build/compile daemons, package-manager services, test hosts and parallel workers, watch modes,
+   browsers, the application under test, containers or emulators started for the run. Agents run
+   check an order of magnitude more often than humans; per-run residue compounds into machine
+   starvation. Processes the operating system starts meanwhile are not check's and are not
+   residue — the rule is about ownership, not about the machine's process count.
 2. **The residue test** (the rule's definition, not advice): run `./scripts/check` twice back to
-   back; after each run, process count and memory return to the baseline measured before the first.
-   `./scripts/residue` runs it (`--fast` for the fast profile) and names every survivor with its
-   command line; it lists anything started meanwhile too, so run it on an otherwise idle machine.
+   back; after each run, no process check could have started is still alive, and memory has
+   returned to the baseline measured before the first within the tolerance.
+   `./scripts/residue` runs it (`--fast` for the fast profile). A process that appears while it
+   measures and is still alive one settle period later is judged by its ancestry: one that
+   descends from a root check cannot start under — the kernel thread parent on POSIX, the service
+   control manager or System on Windows — is listed under its own heading with the reason and
+   does not decide the result; everything else, **including anything whose ancestry cannot be
+   walked**, is named with its command line and fails the run. Init (pid 1) is deliberately not
+   such a root: an orphaned process of check's own is reparented to it. The ancestry is read
+   after the fact, so a recycled pid can in principle place a survivor under an OS root; the
+   window is seconds, and the alternative — counting every passing system process — is what made
+   this test unreliable. The same blindness has a second form on Windows: a process started
+   through a service or COM activation descends from the service control manager even when
+   check is what triggered it, and is ignored — the WMI host the measurement itself activates
+   included. Nothing check runs here activates a long-lived COM object; both costs are accepted
+   knowingly, not overlooked.
+   Memory still reads best on an otherwise idle machine, and so does the process half: an
+   application of yours that starts a child while the test measures — a browser tab, a chat
+   client — descends from no OS root, so it is counted and the run goes red although check never
+   started it. That is the criterion erring closed, which is the side to err on; the answer is a
+   quieter machine, not a wider rule. Read the survivor the run names before you rerun: a step
+   of `scripts/check.conf` or a child of one — here uv, ruff, mypy, pytest — means a rerun would
+   hide residue; an application of your own you can account for, your browser or your chat
+   client, means the machine was busy. Neither? Count it as check's: the criterion already errs
+   that way. On a desktop, expect to rerun.
    Rerun it whenever `scripts/check.conf` changes.
 3. Warm-process caches trade memory for speed for humans who build rarely; with an agent, trade the
    seconds back for a flat memory profile.
